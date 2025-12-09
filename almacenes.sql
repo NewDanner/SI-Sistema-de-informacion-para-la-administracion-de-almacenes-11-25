@@ -608,11 +608,8 @@ INSERT INTO usuarios (username, email, password_hash, nombre_completo, rol_id, a
 ('gerente_maría', 'maria@inti.com', 'maria123', 'María Sánchez', 2, true),
 ('almacenero_juan', 'juan.a@inti.com', 'juan123', 'Juan Pérez Almacén', 3, true),
 ('almacenero_ana', 'ana.a@inti.com', 'ana123', 'Ana Gómez Almacén', 3, true),
-('vendedor_pedro', 'pedro.v@inti.com', 'pedro123', 'Pedro Ruiz Ventas', 4, true),
-('vendedor_luisa', 'luisa.v@inti.com', 'luisa123', 'Luisa Martínez Ventas', 4, true),
-('consultor_miguel', 'miguel.c@inti.com', 'miguel123', 'Miguel Fernández Consultor', 5, true),
 ('almacenero_carlos', 'carlos.a@inti.com', 'carlosa123', 'Carlos Torres Almacén', 3, true),
-('vendedor_erika', 'erika.v@inti.com', 'erika123', 'Erika Díaz Ventas', 4, true);
+('consultor_miguel', 'miguel.c@inti.com', 'miguel123', 'Miguel Fernández Consultor', 4, true);
 
 -- ============================================
 -- 5. LOTES (para productos con vencimiento)
@@ -683,27 +680,23 @@ INSERT INTO movimientos (tipo_movimiento_id, producto_id, cantidad, precio_unita
 
 -- Datos para alertas (20 ejemplos)
 INSERT INTO alertas (tipo_alerta_id, producto_id, mensaje, nivel_prioridad, leida) VALUES
-(1, 6, 'El producto "Hidrocortisona 1% Crema" ha alcanzado el stock mínimo. Stock actual: 40. Stock mínimo: 15.', 'media', false),
-(1, 8, 'El producto "Loratadina 10mg" ha alcanzado el stock mínimo. Stock actual: 55. Stock mínimo: 18.', 'media', false),
-(2, 12, '¡URGENTE! El producto "Termómetro Digital" está por debajo del stock mínimo. Stock actual: 25. Stock mínimo: 5.', 'alta', false),
+(1, 17, 'El producto "Hidrocortisona 1% Crema" ha alcanzado el stock mínimo. Stock actual: 45. Stock mínimo: 15.', 'media', false),
+(1, 25, 'El producto "Loratadina 10mg" ha alcanzado el stock mínimo. Stock actual: 55. Stock mínimo: 18.', 'media', false),
+(2, 37, '¡URGENTE! El producto "Termómetro Digital" está por debajo del stock mínimo. Stock actual: 20. Stock mínimo: 5.', 'alta', false),
 (3, 2, 'El lote "LT-IBU-2024-B02" del producto "Ibuprofeno 400mg" vence en 30 días (2026-02-10)', 'media', false),
-(1, 19, 'El producto "Tensiómetro Digital" ha alcanzado el stock mínimo. Stock actual: 12. Stock mínimo: 3.', 'media', false),
-(2, 20, '¡URGENTE! El producto "Suero Fisiológico" está por debajo del stock crítico. Stock actual: 90. Stock mínimo: 25.', 'alta', false),
-(1, 25, 'El producto "Metoclopramida 10mg" ha alcanzado el stock mínimo. Stock actual: 42. Stock mínimo: 15.', 'media', false),
-(3, 7, 'El lote "LT-OME-2024-G07" del producto "Omeprazol 20mg" vence en 25 días (2025-10-25)', 'media', false),
-(1, 30, 'El producto "Oxímetro de Dedo" ha alcanzado el stock mínimo. Stock actual: 18. Stock mínimo: 5.', 'media', false),
-(4, 24, 'El lote "LT-CAN-2024-X24" del producto "Candida Crema" presenta cambios en color y textura. Requiere inspección de calidad.', 'alta', false),
-(2, 40, '¡URGENTE! El producto "Esfigmomanómetro Aneriode" está por debajo del stock mínimo. Stock actual: 8. Stock mínimo: 2.', 'alta', false),
-(3, 3, 'El lote "LT-AMI-2024-C03" del producto "Amoxicilina 500mg" vence en 20 días (2025-12-31)', 'media', false),
-(1, 45, 'El producto "Omeprazol + Domperidona" ha alcanzado el stock mínimo. Stock actual: 25. Stock mínimo: 8.', 'media', false),
-(2, 49, '¡URGENTE! El producto "Alcohol Isopropílico 70%" está por debajo del stock mínimo. Stock actual: 65. Stock mínimo: 20.', 'alta', false),
+(1, 40, 'El producto "Tensiómetro Digital" ha alcanzado el stock mínimo. Stock actual: 10. Stock mínimo: 3.', 'media', false),
+(2, 35, '¡URGENTE! El producto "Suero Fisiológico" está por debajo del stock crítico. Stock actual: 55. Stock mínimo: 18.', 'alta', false),
+(1, 23, 'El producto "Metoclopramida 10mg" ha alcanzado el stock mínimo. Stock actual: 35. Stock mínimo: 10.', 'media', false),
+(3, 21, 'El lote "LT-OME-2024-G07" del producto "Omeprazol 20mg" vence en 25 días (2025-10-25)', 'media', false),
+(1, 39, 'El producto "Oxímetro de Pulso" ha alcanzado el stock mínimo. Stock actual: 15. Stock mínimo: 5.', 'media', false),
+(4, 24, 'El lote "LT-CAN-2024-X24" del producto "Loperamida 2mg" presenta cambios en color y textura. Requiere inspección de calidad.', 'alta', false),
+(2, 40, '¡URGENTE! El producto "Tensiómetro Digital" está por debajo del stock mínimo. Stock actual: 10. Stock mínimo: 3.', 'alta', false),
+(3, 5, 'El lote "LT-AMI-2024-C03" del producto "Amoxicilina 500mg" vence en 20 días (2025-12-31)', 'media', false),
 (3, 1, 'El lote "LT-PAR-2024-A01" del producto "Paracetamol 500mg" vence en 45 días (2026-01-15)', 'baja', false),
-(1, 35, 'El producto "Furosemida 40mg" ha alcanzado el stock mínimo. Stock actual: 38. Stock mínimo: 12.', 'media', false),
-(4, 16, 'El lote "LT-LID-2024-P16" del producto "Lidocaína 2% Crema" presenta olor anormal. Requiere inspección de calidad.', 'alta', false),
-(2, 50, '¡URGENTE! El producto "Goma de Mascar sin Azúcar" está por debajo del stock mínimo. Stock actual: 80. Stock mínimo: 25.', 'media', false),
-(3, 4, 'El lote "LT-DIC-2024-D04" del producto "Diclofenaco 50mg" vence en 25 días (2025-11-30)', 'media', false),
-(1, 43, 'El producto "Clotrimazol 1% Crema" ha alcanzado el stock mínimo. Stock actual: 38. Stock mínimo: 12.', 'media', false);
-
+(1, 31, 'El producto "Isopropílico 70% 1L" ha alcanzado el stock mínimo. Stock actual: 50. Stock mínimo: 15.', 'media', false),
+(4, 17, 'El lote "LT-LID-2024-P16" del producto "Hidrocortisona 1% Crema" presenta olor anormal. Requiere inspección de calidad.', 'alta', false),
+(3, 10, 'El lote "LT-DIC-2024-D04" del producto "Diclofenaco 75mg" vence en 25 días (2025-11-30)', 'media', false),
+(1, 18, 'El producto "Clotrimazol 1% Crema" ha alcanzado el stock mínimo. Stock actual: 38. Stock mínimo: 12.', 'media', false);
 
 -- Datos para transferencias de ubicación (25 ejemplos)
 INSERT INTO transferencias_ubicacion (producto_id, lote_id, ubicacion_origen_id, ubicacion_destino_id, cantidad, usuario_id, motivo) VALUES
@@ -758,11 +751,12 @@ INSERT INTO control_calidad (lote_id, estado_calidad, usuario_inspector_id, fech
 (20, 'LIBERADO', 1, NOW(), 'Suero fisiológico cumple con especificaciones de esterilidad', true);
 
 -- Actualizar estados de los lotes según el control de calidad
+SET SQL_SAFE_UPDATES = 0;
 UPDATE lotes l
 JOIN control_calidad c ON l.id = c.lote_id
 SET l.estado_calidad = c.estado_calidad,
-    l.fecha_liberacion = IF(c.estado_calidad = 'LIBERADO', c.fecha_inspeccion, NULL);
-
+l.fecha_liberacion = IF(c.estado_calidad = 'LIBERADO', c.fecha_inspeccion, NULL);
+SET SQL_SAFE_UPDATES = 1;
 -- ============================================
 -- VISTA PARA PRODUCTOS CON UBICACIÓN COMPLETA
 -- ============================================
@@ -870,3 +864,25 @@ GROUP BY SUBSTRING_INDEX(u.codigo, '-', 2)
 ORDER BY zona;
 
 SELECT '🎯 SISTEMA COMPLETO LISTO PARA USAR' AS resultado;
+
+-- ============================================
+-- TABLA DE BACKUPS
+-- ============================================
+CREATE TABLE IF NOT EXISTS backups (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_archivo VARCHAR(255) NOT NULL UNIQUE,
+    ruta_archivo VARCHAR(500) NOT NULL,
+    tamano_bytes BIGINT NOT NULL,
+    fecha_creacion DATETIME NOT NULL,
+    usuario_id INT,
+    tipo_backup ENUM('MANUAL', 'AUTOMATICO') NOT NULL,
+    estado ENUM('EXITOSO', 'FALLIDO', 'EN_PROCESO') NOT NULL,
+    descripcion VARCHAR(500),
+    mensaje_error VARCHAR(1000),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL,
+    INDEX idx_backups_fecha (fecha_creacion),
+    INDEX idx_backups_estado (estado),
+    INDEX idx_backups_tipo (tipo_backup)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SELECT '✅ TABLA DE BACKUPS CREADA EXITOSAMENTE' AS mensaje;
