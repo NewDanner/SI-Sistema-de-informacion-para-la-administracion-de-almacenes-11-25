@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${titulo}">Gestión de Backups</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #8B5CF6;
+            --primary-dark: #7C3AED;
+            --secondary-color: #EC4899;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            padding: 2rem 0;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stats-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .badge-exitoso {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        
+        .badge-fallido {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        
+        .badge-proceso {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-action {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            border: none;
+            margin: 0 0.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-download {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .btn-download:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+        }
+        
+        table.dataTable thead th {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            color: #1f2937;
+            font-weight: 600;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid main-container">
+        <div class="container">
+            <!-- Encabezado -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="text-white mb-2">
+                                <i class="fas fa-database"></i> Gestión de Backups
+                            </h1>
+                            <p class="text-white-50">Sistema de respaldo y recuperación de base de datos</p>
+                        </div>
+                        <div>
+                            <a th:href="@{/dashboard}" class="btn btn-light me-2">
+                                <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                            </a>
+                            <form th:action="@{/backups/crear}" method="post" style="display: inline;">
+                                <button type="submit" class="btn btn-primary-custom">
+                                    <i class="fas fa-plus-circle"></i> Crear Backup Ahora
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mensajes de éxito/error -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle"></i> <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            
+            <!-- Estadísticas -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon text-primary">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <h5 class="mb-0" th:text="${stats.totalBackups}">0</h5>
+                        <small class="text-muted">Total Backups</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon text-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h5 class="mb-0" th:text="${stats.backupsExitosos}">0</h5>
+                        <small class="text-muted">Exitosos</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon text-danger">
+                            <i class="fas fa-times-circle"></i>
+                        </div>
+                        <h5 class="mb-0" th:text="${stats.backupsFallidos}">0</h5>
+                        <small class="text-muted">Fallidos</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="stats-icon text-info">
+                            <i class="fas fa-hdd"></i>
+                        </div>
+                        <h5 class="mb-0" th:text="${stats.espacioTotal}">0 MB</h5>
+                        <small class="text-muted">Espacio Total</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información de Backups Automáticos -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="alert alert-info" role="alert">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-info-circle"></i> Configuración de Backups Automáticos
+                        </h6>
+                        <p class="mb-0">
+                            <strong>Frecuencia:</strong> Cada 5 días a las 2:00 AM<br>
+                            <strong>Retención:</strong> Los backups antiguos (mayores a 10 días) se eliminan automáticamente<br>
+                            <strong>Limpieza:</strong> Todos los días a las 3:00 AM
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tabla de Backups -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> Listado de Backups
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="tablaBackups" class="table table-hover table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre Archivo</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                    <th>Tamaño</th>
+                                    <th>Usuario</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="backup : ${backups}">
+                                    <td th:text="${backup.id}">1</td>
+                                    <td>
+                                        <i class="fas fa-file-archive text-primary"></i>
+                                        <span th:text="${backup.nombreArchivo}">backup.sql</span>
+                                    </td>
+                                    <td th:text="${#temporals.format(backup.fechaCreacion, 'dd/MM/yyyy HH:mm:ss')}">
+                                        01/01/2024 02:00:00
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary" th:if="${backup.tipoBackup.name() == 'MANUAL'}">
+                                            <i class="fas fa-hand-pointer"></i> Manual
+                                        </span>
+                                        <span class="badge bg-info" th:if="${backup.tipoBackup.name() == 'AUTOMATICO'}">
+                                            <i class="fas fa-robot"></i> Automático
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge-exitoso" th:if="${backup.estado.name() == 'EXITOSO'}">
+                                            <i class="fas fa-check"></i> Exitoso
+                                        </span>
+                                        <span class="badge-fallido" th:if="${backup.estado.name() == 'FALLIDO'}">
+                                            <i class="fas fa-times"></i> Fallido
+                                        </span>
+                                        <span class="badge-proceso" th:if="${backup.estado.name() == 'EN_PROCESO'}">
+                                            <i class="fas fa-spinner fa-spin"></i> En Proceso
+                                        </span>
+                                    </td>
+                                    <td th:text="${backup.tamanoLegible}">10 MB</td>
+                                    <td>
+                                        <span th:if="${backup.usuario != null}" th:text="${backup.usuario.username}">admin</span>
+                                        <span th:unless="${backup.usuario != null}" class="text-muted">Sistema</span>
+                                    </td>
+                                    <td>
+                                        <!-- Botón Descargar -->
+                                        <a th:if="${backup.estado.name() == 'EXITOSO'}" 
+                                           th:href="@{/backups/descargar/{id}(id=${backup.id})}"
+                                           class="btn btn-action btn-download"
+                                           title="Descargar">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        
+                                        <!-- Botón Eliminar -->
+                                        <button type="button" 
+                                                class="btn btn-action btn-delete"
+                                                data-bs-toggle="modal" 
+                                                th:data-bs-target="'#modalEliminar' + ${backup.id}"
+                                                title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        
+                                        <!-- Modal de Confirmación -->
+                                        <div class="modal fade" th:id="'modalEliminar' + ${backup.id}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title">
+                                                            <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                                                        </h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>¿Está seguro que desea eliminar el backup?</p>
+                                                        <p><strong th:text="${backup.nombreArchivo}">backup.sql</strong></p>
+                                                        <p class="text-danger">
+                                                            <i class="fas fa-exclamation-circle"></i> 
+                                                            Esta acción no se puede deshacer
+                                                        </p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                            Cancelar
+                                                        </button>
+                                                        <form th:action="@{/backups/eliminar/{id}(id=${backup.id})}" 
+                                                              method="post" 
+                                                              style="display: inline;">
+                                                            <button type="submit" class="btn btn-danger">
+                                                                <i class="fas fa-trash"></i> Eliminar
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script th:inline="none">
+        $(document).ready(function() {
+            $('#tablaBackups').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json'
+                },
+                order: [[ 2, 'desc' ]], // Ordenar por fecha descendente (columna 2)
+                pageLength: 10,
+                responsive: true
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movimientos - Sistema de Inventario</title>
+    <th:block th:replace="~{fragments/header :: head(title='Movimientos')}"></th:block>
+</head>
+<body>
+    <th:block th:replace="~{fragments/header :: header(pageTitle='Movimientos de Inventario', pageIcon='fas fa-exchange-alt')}"></th:block>
+
+    <div class="d-flex justify-content-end mb-3">
+        <a th:href="@{/movimientos/nuevo}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Movimiento
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover datatable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Producto</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                            <th>Usuario</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="movimiento : ${movimientos}">
+                            <td th:text="${#temporals.format(movimiento.fechaMovimiento, 'dd/MM/yyyy HH:mm')}"></td>
+                            <td th:text="${movimiento.producto?.nombre}"></td>
+                            <td>
+                                <span th:if="${movimiento.tipoMovimiento?.afectaStock == 1}" class="badge bg-success" 
+                                      th:text="${movimiento.tipoMovimiento?.nombre}"></span>
+                                <span th:if="${movimiento.tipoMovimiento?.afectaStock == -1}" class="badge bg-danger" 
+                                      th:text="${movimiento.tipoMovimiento?.nombre}"></span>
+                            </td>
+                            <td th:text="${movimiento.cantidad}"></td>
+                            <td th:text="${movimiento.usuario?.nombreCompleto}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+</body>
+</html>

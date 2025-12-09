@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${movimiento.id != null} ? 'Editar Movimiento' : 'Nuevo Movimiento'">Formulario Movimiento</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-capsules"></i> Droguería Inti
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h4><i class="fas fa-exchange-alt"></i> Nuevo Movimiento</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- ✅ CORRECCIÓN: Binding correcto de Thymeleaf -->
+                        <form th:action="@{/movimientos/guardar}" 
+                              th:object="${movimiento}" 
+                              method="post" 
+                              class="needs-validation" 
+                              novalidate>
+                            
+                            <input type="hidden" th:field="*{id}" />
+                            
+                            <!-- TIPO DE MOVIMIENTO -->
+                            <div class="mb-3">
+                                <label for="tipoMovimiento" class="form-label">
+                                    <i class="fas fa-list"></i> Tipo de Movimiento *
+                                </label>
+                                <select class="form-select" 
+                                        id="tipoMovimiento" 
+                                        name="tipoMovimiento.id" 
+                                        required>
+                                    <option value="">Seleccionar tipo</option>
+                                    <option th:each="tipo : ${tiposMovimiento}" 
+                                            th:value="${tipo.id}"
+                                            th:text="${tipo.nombre + ' (' + (tipo.afectaStock > 0 ? 'ENTRADA' : (tipo.afectaStock < 0 ? 'SALIDA' : 'AJUSTE')) + ')'}">
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Selecciona un tipo de movimiento
+                                </div>
+                            </div>
+                            
+                            <!-- PRODUCTO -->
+                            <div class="mb-3">
+                                <label for="producto" class="form-label">
+                                    <i class="fas fa-box"></i> Producto *
+                                </label>
+                                <select class="form-select" 
+                                        id="producto" 
+                                        name="producto.id" 
+                                        required 
+                                        onchange="cargarInfoProducto(this)">
+                                    <option value="">Seleccionar producto</option>
+                                    <option th:each="producto : ${productos}" 
+                                            th:value="${producto.id}"
+                                            th:data-stock="${producto.stockActual}"
+                                            th:data-nombre="${producto.nombre}"
+                                            th:text="${producto.codigo + ' - ' + producto.nombre + ' (Stock: ' + producto.stockActual + ')'}">
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Selecciona un producto
+                                </div>
+                            </div>
+                            
+                            <!-- CANTIDAD -->
+                            <div class="mb-3">
+                                <label for="cantidad" class="form-label">
+                                    <i class="fas fa-hashtag"></i> Cantidad *
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="cantidad" 
+                                       name="cantidad" 
+                                       min="1" 
+                                       required>
+                                <div class="invalid-feedback">
+                                    La cantidad debe ser mayor a 0
+                                </div>
+                            </div>
+                            
+                            <!-- PRECIO UNITARIO -->
+                            <div class="mb-3">
+                                <label for="precioUnitario" class="form-label">
+                                    <i class="fas fa-dollar-sign"></i> Precio Unitario (S/)
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="precioUnitario" 
+                                       name="precioUnitario" 
+                                       step="0.01" 
+                                       min="0">
+                            </div>
+                            
+                            <!-- PROVEEDOR -->
+                            <div class="mb-3">
+                                <label for="proveedor" class="form-label">
+                                    <i class="fas fa-truck"></i> Proveedor
+                                </label>
+                                <select class="form-select" 
+                                        id="proveedor" 
+                                        name="proveedor.id">
+                                    <option value="">Seleccionar proveedor (opcional)</option>
+                                    <option th:each="proveedor : ${proveedores}" 
+                                            th:value="${proveedor.id}"
+                                            th:text="${proveedor.nombre}">
+                                    </option>
+                                </select>
+                            </div>
+                            
+                            <!-- DOCUMENTO REFERENCIA -->
+                            <div class="mb-3">
+                                <label for="documentoReferencia" class="form-label">
+                                    <i class="fas fa-file-invoice"></i> Documento de Referencia
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="documentoReferencia" 
+                                       name="documentoReferencia" 
+                                       maxlength="100"
+                                       placeholder="Ej: FACT-001, NOTA-123">
+                            </div>
+                            
+                            <!-- MOTIVO -->
+                            <div class="mb-3">
+                                <label for="motivo" class="form-label">
+                                    <i class="fas fa-comment"></i> Motivo del Movimiento
+                                </label>
+                                <textarea class="form-control" 
+                                          id="motivo" 
+                                          name="motivo" 
+                                          rows="3" 
+                                          maxlength="255" 
+                                          placeholder="Ej: Compra regular, Venta a cliente..."></textarea>
+                            </div>
+                            
+                            <!-- INFO STOCK -->
+                            <div class="alert alert-info" id="infoStock" style="display: none;">
+                                <h6><i class="fas fa-info-circle"></i> Información del Producto</h6>
+                                <div id="stockInfo"></div>
+                            </div>
+                            
+                            <!-- BOTONES -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Registrar Movimiento
+                                </button>
+                                <a th:href="@{/movimientos}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Cargar información del producto
+        function cargarInfoProducto(select) {
+            const infoStock = document.getElementById('infoStock');
+            const stockInfo = document.getElementById('stockInfo');
+            
+            if (!select.value) {
+                infoStock.style.display = 'none';
+                return;
+            }
+            
+            const selectedOption = select.options[select.selectedIndex];
+            const stock = selectedOption.getAttribute('data-stock');
+            const nombre = selectedOption.getAttribute('data-nombre');
+            
+            if (stock !== null) {
+                stockInfo.innerHTML = `
+                    <strong>Producto:</strong> ${nombre}<br>
+                    <strong>Stock actual:</strong> <span class="badge bg-primary">${stock} unidades</span>
+                `;
+                infoStock.style.display = 'block';
+            }
+        }
+        
+        // Validación de formulario
+        (function() {
+            'use strict';
+            const forms = document.querySelectorAll('.needs-validation');
+            
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --primary-dark: #1a252f;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .login-container {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .brand-section {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: relative;
+        }
+        
+        @media (min-width: 768px) {
+            .brand-section {
+                width: 45%;
+            }
+        }
+        
+        .brand-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            z-index: 0;
+        }
+        
+        .brand-section i {
+            font-size: 5rem;
+            color: white;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 15px;
+            z-index: 1;
+        }
+        
+        .brand-section h1 {
+            font-weight: 800;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+            z-index: 1;
+        }
+        
+        .brand-section p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            z-index: 1;
+        }
+        
+        .login-section {
+            padding: 40px 30px;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .login-section {
+                width: 55%;
+            }
+        }
+        
+        .login-title {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            height: calc(2.75rem + 2px);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .form-control::placeholder {
+            color: #aaa;
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-radius: 10px 0 0 10px;
+            border-right: none;
+            color: #777;
+        }
+        
+        .btn-login {
+            background: linear-gradient(135deg, var(--secondary), #1a5276);
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.6);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .register-link {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .register-link a {
+            color: var(--secondary);
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .register-link a:hover {
+            color: #1a5276;
+            text-decoration: underline;
+        }
+        
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+        
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        
+        .forgot-password a {
+            color: var(--warning);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .forgot-password a:hover {
+            color: #d35400;
+            text-decoration: underline;
+        }
+        
+        .login-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="brand-section">
+            <i class="fas fa-capsules"></i>
+            <h1>Droguería Inti</h1>
+            <p>Sistema de Gestión de Inventario</p>
+            <div class="mt-4">
+                <span class="badge bg-light text-dark">V1.0</span>
+                <span class="badge bg-success ms-2">Seguro</span>
+                <span class="badge bg-info ms-2">2025</span>
+            </div>
+        </div>
+        
+        <div class="login-section">
+            <h2 class="login-title">
+                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+            </h2>
+            
+            <div th:if="${param.error}" class="alert alert-danger alert-custom">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Error:</strong> Credenciales incorrectas. Por favor, intente nuevamente.
+            </div>
+            
+            <div th:if="${param.logout}" class="alert alert-success alert-custom">
+                <i class="fas fa-check-circle me-2"></i>
+                Sesión cerrada exitosamente. ¡Vuelva pronto!
+            </div>
+
+            <form th:action="@{/login}" method="post" id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">
+                        <i class="fas fa-user me-2"></i> Usuario
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-user"></i>
+                        </span>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="Ingrese su nombre de usuario" required 
+                               th:value="${param.username}" autocomplete="username">
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">
+                        <i class="fas fa-lock me-2"></i> Contraseña
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Ingrese su contraseña" required autocomplete="current-password">
+                        <button type="button" class="btn password-toggle" id="togglePassword" 
+                                title="Mostrar/ocultar contraseña" style="border-radius: 0 10px 10px 0">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="d-grid mb-4">
+                    <button type="submit" class="btn btn-login">
+                        <i class="fas fa-sign-in-alt me-2"></i> Ingresar al Sistema
+                    </button>
+                </div>
+                
+                <div class="register-link">
+                    <small>
+                        ¿No tiene una cuenta? 
+                        <a th:href="@{/secure-register}">
+                            <i class="fas fa-user-plus me-1"></i> Crear cuenta de administrador
+                        </a>
+                    </small>
+                </div>
+                
+                <div class="login-footer">
+                    <p>
+                        <i class="fas fa-shield-alt me-1"></i> Sistema seguro con auditoría de accesos
+                        <br>
+                        <small class="text-muted">© 2025 Droguería Inti - Todos los derechos reservados</small>
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const togglePassword = document.querySelector('#togglePassword');
+            const password = document.querySelector('#password');
+            const username = document.querySelector('#username');
+
+            // Función para mostrar/ocultar contraseña
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                
+                // Cambiar icono
+                const icon = this.querySelector('i');
+                if (type === 'text') {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+            
+            // Inicializar tooltip
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Auto-focus en el campo de usuario si está vacío
+            if (username && !username.value) {
+                username.focus();
+            }
+            
+            // Validación del formulario
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value.trim();
+                
+                if (!username || !password) {
+                    e.preventDefault();
+                    alert('Por favor, complete todos los campos');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

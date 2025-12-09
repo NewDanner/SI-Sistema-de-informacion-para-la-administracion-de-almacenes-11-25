@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Sistema de Inventario</title>
+    <th:block th:replace="~{fragments/header::head(title='Reportes')}"></th:block>
+    <style>
+        .report-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            height: 100%;
+        }
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .report-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <th:block th:replace="~{fragments/header::header(pageTitle='Reportes del Sistema', pageIcon='fas fa-chart-bar')}"></th:block>
+
+    <!-- Filtros de Fecha -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>Filtros de Fecha
+            </h5>
+        </div>
+        <div class="card-body">
+            <form class="row g-3">
+                <div class="col-md-3">
+                    <label for="fechaInicio" class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" id="fechaInicio" name="fechaInicio">
+                </div>
+                <div class="col-md-3">
+                    <label for="fechaFin" class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" id="fechaFin" name="fechaFin">
+                </div>
+                <div class="col-md-4">
+                    <label for="tipoReporte" class="form-label">Tipo de Reporte</label>
+                    <select class="form-select" id="tipoReporte" name="tipoReporte">
+                        <option value="">Todos los reportes</option>
+                        <option value="inventario">Inventario General</option>
+                        <option value="movimientos">Movimientos</option>
+                        <option value="stock-bajo">Stock Bajo</option>
+                        <option value="vencimientos">Productos por Vencer</option>
+                        <option value="rotacion">Análisis de Rotación</option>
+                        <option value="movimientos-anuales">Movimientos Anuales</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-primary w-100" onclick="aplicarFiltros()">
+                        <i class="fas fa-play me-1"></i> Aplicar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Reportes Disponibles -->
+    <div class="row">
+        <!-- Inventario General -->
+        <div class="col-md-4 mb-4">
+            <div class="card report-card border-primary h-100">
+                <div class="card-body text-center">
+                    <div class="report-icon text-primary">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <h5 class="card-title">Inventario General</h5>
+                    <p class="card-text">
+                        Reporte completo del inventario actual con todos los productos, 
+                        stocks, precios y valores totales.
+                    </p>
+                    <div class="btn-group mt-3">
+                        <a class="btn btn-primary" th:href="@{/reportes/inventario/excel}">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a class="btn btn-danger" th:href="@{/reportes/inventario/pdf}">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Incluye: Stock actual, valores, estado de inventario
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stock Bajo y Agotado -->
+        <div class="col-md-4 mb-4">
+            <div class="card report-card border-warning h-100">
+                <div class="card-body text-center">
+                    <div class="report-icon text-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h5 class="card-title">Stock Bajo y Agotado</h5>
+                    <p class="card-text">
+                        Productos con stock mínimo o agotados que requieren atención inmediata 
+                        para reposición.
+                    </p>
+                    <div class="btn-group mt-3">
+                        <a class="btn btn-primary" th:href="@{/reportes/stock-bajo/excel}">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a class="btn btn-danger" th:href="@{/reportes/stock-bajo/pdf}">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Productos con stock menor al mínimo establecido
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vencimientos Próximos -->
+        <div class="col-md-4 mb-4">
+            <div class="card report-card border-danger h-100">
+                <div class="card-body text-center">
+                    <div class="report-icon text-danger">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h5 class="card-title">Vencimientos Próximos</h5>
+                    <p class="card-text">
+                        Lotes de productos próximos a vencer para gestionar su rotación 
+                        y evitar pérdidas.
+                    </p>
+                    <div class="btn-group mt-3">
+                        <a class="btn btn-primary" th:href="@{/reportes/vencimientos/excel}">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a class="btn btn-danger" th:href="@{/reportes/vencimientos/pdf}">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Lotes que vencen en los próximos 30 días
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movimientos Diarios -->
+        <div class="col-md-4 mb-4">
+            <div class="card report-card border-info h-100">
+                <div class="card-body text-center">
+                    <div class="report-icon text-info">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <h5 class="card-title">Movimientos Diarios</h5>
+                    <p class="card-text">
+                        Registro detallado de todas las entradas, salidas y ajustes 
+                        realizados en el inventario.
+                    </p>
+                    <div class="btn-group mt-3">
+                        <a class="btn btn-primary" th:href="@{/reportes/movimientos-semanales/excel}">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a class="btn btn-danger" th:href="@{/reportes/movimientos-semanales/pdf}">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Movimientos por rango de fechas seleccionado
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análisis de Rotación -->
+        <div class="col-md-4 mb-4">
+            <div class="card report-card border-success h-100">
+                <div class="card-body text-center">
+                    <div class="report-icon text-success">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5 class="card-title">Análisis de Rotación</h5>
+                    <p class="card-text">
+                        Reporte de productos más y menos vendidos para optimizar 
+                        el inventario y compras.
+                    </p>
+                    <div class="btn-group mt-3">
+                        <a class="btn btn-primary" th:href="@{/reportes/rotacion/excel}">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a class="btn btn-danger" th:href="@{/reportes/rotacion/pdf}">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Basado en movimientos de los últimos 90 días
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movimientos Anuales -->
+        <div class="col-md-4 mb-4">
+            <div class="card report-card border-dark h-100">
+                <div class="card-body text-center">
+                    <div class="report-icon text-dark">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h5 class="card-title">Movimientos Anuales</h5>
+                    <p class="card-text">
+                        Resumen anual de todos los movimientos de inventario 
+                        para análisis estratégico.
+                    </p>
+                    <div class="btn-group mt-3">
+                        <a class="btn btn-primary" th:href="@{/reportes/movimientos-anuales/excel}">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a class="btn btn-danger" th:href="@{/reportes/movimientos-anuales/pdf}">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Resumen anual completo del inventario
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/footer::footer}"></th:block>
+    
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Establecer fechas por defecto (últimos 30 días)
+            const fechaFin = new Date();
+            const fechaInicio = new Date();
+            fechaInicio.setDate(fechaInicio.getDate() - 30);
+            
+            if(document.getElementById('fechaInicio')) {
+                document.getElementById('fechaInicio').valueAsDate = fechaInicio;
+            }
+            if(document.getElementById('fechaFin')) {
+                document.getElementById('fechaFin').valueAsDate = fechaFin;
+            }
+
+            // Animación para las tarjetas de reportes
+            const reportCards = document.querySelectorAll('.report-card');
+            reportCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.cursor = 'pointer';
+                });
+            });
+        });
+
+        function aplicarFiltros() {
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            const tipoReporte = document.getElementById('tipoReporte').value;
+            
+            if(tipoReporte) {
+                // Redirigir al reporte seleccionado con las fechas
+                window.location.href = `/reportes/${tipoReporte}?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+            } else {
+                alert('Filtros aplicados:\nFecha Inicio: ' + fechaInicio + 
+                      '\nFecha Fin: ' + fechaFin + 
+                      '\nTipo Reporte: ' + tipoReporte);
+            }
+        }
+    </script>
+</body>
+</html>

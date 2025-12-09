@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema de Inventario</title>
+    <th:block th:replace="~{fragments/header :: head(title='Dashboard')}"></th:block>
+</head>
+<body>
+    <!-- Incluir Header: Navbar + Sidebar + Container -->
+    <th:block th:replace="~{fragments/header :: header(pageTitle='Dashboard', pageIcon='fas fa-tachometer-alt')}"></th:block>
+
+    <!-- ========================================== -->
+    <!-- MÓDULOS ADMINISTRATIVOS - NUEVA SECCIÓN   -->
+    <!-- ========================================== -->
+    <div class="row mb-4" sec:authorize="hasRole('ADMIN')">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-cogs me-2"></i>Módulos Administrativos
+            </h4>
+        </div>
+        
+        <!-- Card de Auditoría -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #8B5CF6 !important;">
+                <div class="card-body text-center">
+                    <div class="mb-3" style="font-size: 3rem; color: #8B5CF6;">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <h5 class="card-title">Auditoría</h5>
+                    <p class="card-text text-muted">
+                        Registro completo de todas las operaciones del sistema
+                    </p>
+                    <div class="mt-3">
+                        <a th:href="@{/auditoria}" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> Ver Auditoría
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card de Backups (NUEVO) -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #10b981 !important;">
+                <div class="card-body text-center">
+                    <div class="mb-3" style="font-size: 3rem; color: #10b981;">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h5 class="card-title">Backups</h5>
+                    <p class="card-text text-muted">
+                        Sistema de respaldo automático de base de datos
+                    </p>
+                    <div class="mt-3">
+                        <a th:href="@{/backups}" class="btn btn-outline-success">
+                            <i class="fas fa-list"></i> Gestionar Backups
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ========================================== -->
+    <!-- FIN MÓDULOS ADMINISTRATIVOS               -->
+    <!-- ========================================== -->
+
+    <!-- CONTENIDO DEL DASHBOARD -->
+    <div class="row">
+        <!-- Tarjetas de Resumen -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card primary h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${totalProductos} ?: '0'">0</h5>
+                    <span class="stat-label">Productos Totales</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card warning h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${productosStockBajo} ?: '0'">0</h5>
+                    <span class="stat-label">Stock Bajo</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card danger h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${productosProximosVencer} ?: '0'">0</h5>
+                    <span class="stat-label">Próximos a Vencer</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card success h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${valorInventario} ? 'Bs. ' + ${#numbers.formatDecimal(valorInventario, 1, 2)} : 'Bs. 0.00'">Bs. 0.00</h5>
+                    <span class="stat-label">Valor del Inventario</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos y Tablas -->
+    <div class="row mt-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Distribución por Categoría
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="productosPorCategoriaChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bell me-2"></i>Alertas Recientes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${alertasRecientes != null and not #lists.isEmpty(alertasRecientes)}">
+                        <div th:each="alerta : ${alertasRecientes}" class="alert alert-sm mb-2"
+                             th:classappend="${alerta.nivelPrioridad == 'critica'} ? 'alert-danger' : 
+                                            (${alerta.nivelPrioridad == 'alta'} ? 'alert-warning' : 'alert-info')">
+                            <small th:text="${alerta.mensaje}"></small>
+                        </div>
+                    </div>
+                    <div th:if="${alertasRecientes == null or #lists.isEmpty(alertasRecientes)}">
+                        <p class="text-muted text-center">No hay alertas recientes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos con Stock Bajo -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>Productos con Stock Bajo
+                    </h5>
+                    <a th:href="@{/productos}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye me-1"></i>Ver Todos
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Stock Actual</th>
+                                    <th>Stock Mínimo</th>
+                                    <th>Estado</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="producto : ${productosStockBajoLista}">
+                                    <td th:text="${producto.codigo}">PRD-001</td>
+                                    <td th:text="${producto.nombre}">Paracetamol 500mg</td>
+                                    <td th:text="${producto.categoria.nombre}">Medicamentos</td>
+                                    <td>
+                                        <span class="badge bg-warning" th:text="${producto.stockActual}">10</span>
+                                    </td>
+                                    <td th:text="${producto.stockMinimo}">50</td>
+                                    <td>
+                                        <span class="badge" 
+                                              th:classappend="${producto.stockActual < producto.stockMinimo / 2} ? 'bg-danger' : 'bg-warning'"
+                                              th:text="${producto.stockActual < producto.stockMinimo / 2} ? 'Crítico' : 'Bajo'">
+                                            Bajo
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{/productos/editar/{id}(id=${producto.id})}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Productos Próximos a Vencer -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar-times me-2 text-danger"></i>Productos Próximos a Vencer
+                    </h5>
+                    <a th:href="@{/lotes}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye me-1"></i>Ver Todos los Lotes
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Lote</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Fecha Vencimiento</th>
+                                    <th>Días Restantes</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="lote : ${lotesProximosVencer}">
+                                    <td th:text="${lote.numeroLote}">LT-001</td>
+                                    <td th:text="${lote.producto.nombre}">Ibuprofeno 400mg</td>
+                                    <td th:text="${lote.cantidadActual}">100</td>
+                                    <td th:text="${#temporals.format(lote.fechaVencimiento, 'dd/MM/yyyy')}">31/12/2024</td>
+                                    <td>
+                                        <span th:with="diasRestantes=${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), lote.fechaVencimiento)}"
+                                              class="badge"
+                                              th:classappend="${diasRestantes <= 30} ? 'bg-danger' : (${diasRestantes <= 60} ? 'bg-warning' : 'bg-info')"
+                                              th:text="${diasRestantes} + ' días'">
+                                            45 días
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge" 
+                                              th:classappend="${lote.estadoCalidad == 'LIBERADO'} ? 'bg-success' : 
+                                                             (${lote.estadoCalidad == 'EN_CUARENTENA'} ? 'bg-warning' : 'bg-secondary')"
+                                              th:text="${lote.estadoCalidad}">
+                                            LIBERADO
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluir Footer: Cierra contenedores + Footer + Scripts -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <!-- Script específico del Dashboard -->
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Datos para el gráfico de distribución por categoría
+            const ctx = document.getElementById('productosPorCategoriaChart');
+            
+            if (ctx) {
+                // Obtener datos desde el backend
+                const categorias = /*[[${categorias}]]*/ [];
+                const cantidades = /*[[${cantidadesPorCategoria}]]*/ [];
+                
+                const colores = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
+                
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: categorias,
+                        datasets: [{
+                            label: 'Productos por Categoría',
+                            data: cantidades,
+                            backgroundColor: colores.slice(0, categorias.length),
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += context.parsed + ' productos';
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

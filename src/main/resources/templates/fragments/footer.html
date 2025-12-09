@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Footer Fragment</title>
+</head>
+<body>
+    <!--====================================================-->
+    <!-- FRAGMENTO FOOTER- Cierra contenedores, Footer y Scripts--> 
+    <!-- Este fragmento CIERRA todo lo que header abrió--> 
+    <!--====================================================-->
+    
+    <div th:fragment="footer">
+        </div><!-- Cierre container-fluid-->
+    </main>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <span class="text-muted"> 
+                        &copy; 2024 Droguería Inti. Todos los derechos reservados.
+                    </span>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <span class="text-muted">
+                        <i class="fas fa-microchip"></i> Sistema de Inventario v1.0.0 \| 
+                        <i class="fas fa-database"></i> Base de Datos Conectada
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts-->
+    <!-- jQuery--> 
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- ✅ CORRECCIÓN: Asegurar que se carga el bundle completo de Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS-->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Select2 JS-->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Custom JS-->
+    <script th:src="@{/js/app.js}"></script>
+    
+    <!-- Scripts específicos de página--> 
+    <th:block th:if="${pageScript!= null}"> 
+        <script th:src="@{${pageScript}}"></script> 
+    </th:block>
+
+    <script>
+        $(document).ready(function(){
+            // Inicializar DataTables en todas las tablas con clase'datatable'
+            $('.table-responsive').find('table').each(function(){
+                if($(this).hasClass('datatable')){
+                    $(this).DataTable({
+                        language: {
+                            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                        },
+                        pageLength: 10,
+                        responsive: true,
+                        order: [[0, 'desc']]// Ordenar por primera columna descendente por defecto
+                    });
+                }
+            });
+            
+            // Inicializar Select2 en todos los select con clase'select2'
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Seleccione una opción',
+                allowClear: true
+            });
+            
+            // Auto-ocultar alertas después de 5 segundos
+            $('.alert.auto-dismiss').each(function(){
+                const alert = $(this);
+                setTimeout(function(){
+                    alert.fadeOut('slow', function(){
+                        alert.remove();
+                    });
+                }, 5000);
+            });
+            
+            // Confirmación para acciones de eliminación
+            $('.btn-delete').on('click', function(e){
+                const message = $(this).data('confirm-message') || '¿Está seguro de que desea eliminar este registro?';
+                if(!confirm(message)){
+                    e.preventDefault();
+                }
+            });
+            
+            // Mostrar/Ocultar sidebar en móviles
+            $('.navbar-toggler').first().on('click', function(){
+                $('#sidebar').toggleClass('show');
+            });
+            
+            // Cerrar sidebar al hacer clic en un enlace(en móviles)
+            $('#sidebar .nav-link').on('click', function(){
+                if($(window).width() < 992){
+                    $('#sidebar').removeClass('show');
+                }
+            });
+            
+            // ✅ CORRECCIÓN: Script corregido para inicializar el menú de productos
+            const currentPath = window.location.pathname;
+            const productosMenu = document.querySelector('#productosMenu');
+            
+            if(productosMenu) {
+                // Limpiar clases colapsadas/expandidas previas
+                productosMenu.classList.remove('show');
+                const buttonToggle = document.querySelector('a[href="#productosMenu"]');
+                if(buttonToggle) {
+                    buttonToggle.classList.remove('collapsed');
+                }
+                
+                // Si estamos en una ruta de productos, expandir el menú
+                if(currentPath.startsWith('/productos') || 
+                   currentPath.startsWith('/categorias') || 
+                   currentPath.startsWith('/ubicaciones') || 
+                   currentPath.startsWith('/transferencias-ubicacion') || 
+                   currentPath.startsWith('/control-calidad') || 
+                   currentPath.startsWith('/lotes') || 
+                   currentPath.startsWith('/mapa')){
+                    // Asegurar que el botón de toggle tenga la clase correcta
+                    if(buttonToggle) {
+                        buttonToggle.setAttribute('aria-expanded', 'true');
+                        buttonToggle.classList.remove('collapsed');
+                    }
+                    // Inicializar el collapse si no existe
+                    let collapse = bootstrap.Collapse.getInstance(productosMenu);
+                    if(!collapse) {
+                        collapse = new bootstrap.Collapse(productosMenu, { 
+                            toggle: false 
+                        });
+                    }
+                    collapse.show();
+                } else {
+                    // Si no estamos en rutas de productos, colapsar el menú
+                    if(buttonToggle) {
+                        buttonToggle.setAttribute('aria-expanded', 'false');
+                        buttonToggle.classList.add('collapsed');
+                    }
+                    let collapse = bootstrap.Collapse.getInstance(productosMenu);
+                    if(!collapse) {
+                        collapse = new bootstrap.Collapse(productosMenu, { 
+                            toggle: false 
+                        });
+                    }
+                    collapse.hide();
+                }
+            }
+            
+            //**MARCAR MENÚ ACTIVO AUTOMÁTICAMENTE**
+            // Obtener la ruta actual
+            const path = window.location.pathname;
+            
+            // Seleccionar todos los enlaces del sidebar
+            const sidebarLinks = document.querySelectorAll('#sidebar .nav-link[data-page]');
+            
+            // Función para determinar si un enlace debe estar activo
+            sidebarLinks.forEach(link => {
+                const page = link.getAttribute('data-page');
+                const href = link.getAttribute('href');
+                
+                // Limpiar clases active previas
+                link.classList.remove('active');
+                
+                // Marcar como activo si coincide con la ruta
+                if( 
+                    (page === 'dashboard' && (path === '/' || path.startsWith('/dashboard'))) ||
+                    (page === 'productos' && (path.startsWith('/productos') || path.startsWith('/categorias'))) ||
+                    (page === 'lotes' && path.startsWith('/lotes')) ||
+                    (page === 'ubicaciones' && path.startsWith('/ubicaciones')) ||
+                    (page === 'transferencias' && path.startsWith('/transferencias-ubicacion')) ||
+                    (page === 'control-calidad' && path.startsWith('/control-calidad')) ||
+                    (page === 'mapa' && path.startsWith('/mapa')) ||
+                    (page === 'categorias' && path.startsWith('/categorias')) ||
+                    (page === 'movimientos' && path.startsWith('/movimientos')) ||
+                    (page === 'alertas' && path.startsWith('/alertas')) ||
+                    (page === 'reportes' && path.startsWith('/reportes')) ||
+                    (page === 'auditoria' && path.startsWith('/auditoria'))
+                ){
+                    link.classList.add('active');
+                    
+                    // Si es un elemento dentro del menú de productos, expandir el menú
+                    if(page === 'productos' || page === 'lotes' || page === 'ubicaciones' || 
+                       page === 'transferencias' || page === 'control-calidad' || page === 'mapa' || 
+                       page === 'categorias') {
+                        const productosMenu = document.querySelector('#productosMenu');
+                        if(productosMenu && !productosMenu.classList.contains('show')) {
+                            let collapse = bootstrap.Collapse.getInstance(productosMenu);
+                            if(!collapse) {
+                                collapse = new bootstrap.Collapse(productosMenu, { 
+                                    toggle: false 
+                                });
+                            }
+                            collapse.show();
+                            
+                            const buttonToggle = document.querySelector('a[href="#productosMenu"]');
+                            if(buttonToggle) {
+                                buttonToggle.setAttribute('aria-expanded', 'true');
+                                buttonToggle.classList.remove('collapsed');
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Validación de formularios con Bootstrap
+            const forms = document.querySelectorAll('.needs-validation');
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if(!form.checkValidity()){
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+            
+            // Tooltips de Bootstrap
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(tooltipTriggerEl){
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Popovers de Bootstrap
+            const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            popoverTriggerList.map(function(popoverTriggerEl){
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+        });
+    </script>
+</body>
+</html>

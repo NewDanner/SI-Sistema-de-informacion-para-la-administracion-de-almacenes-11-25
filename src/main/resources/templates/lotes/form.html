@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${lote.id != null} ? 'Editar Lote' : 'Nuevo Lote'">Formulario Lote</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <style>
+        .form-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        }
+        .form-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-center;
+            margin-bottom: 2rem;
+        }
+        .form-header h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        .btn-cancel {
+            background-color: #6c757d;
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            border-radius: 8px;
+            color: white;
+        }
+        .info-card {
+            background: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .required::after {
+            content: "*";
+            color: #dc3545;
+            margin-left: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <!-- Header -->
+            <div class="form-header">
+                <i class="fas fa-box-open fa-2x mb-2"></i>
+                <h2 th:text="${lote.id != null} ? 'Editar Lote' : 'Registrar Nuevo Lote'">Formulario de Lote</h2>
+                <p class="mb-0 mt-2">Complete los datos del lote para su registro</p>
+            </div>
+
+            <!-- Información -->
+            <div class="info-card">
+                <i class="fas fa-info-circle text-success"></i> 
+                <strong>Importante:</strong> Los lotes permiten el control de trazabilidad y gestión de fechas de vencimiento de los productos.
+            </div>
+
+            <!-- Formulario -->
+            <form th:action="@{/lotes/guardar}" th:object="${lote}" method="post">
+                <input type="hidden" th:field="*{id}"/>
+
+                <div class="row">
+                    <!-- Número de Lote -->
+                    <div class="col-md-6 mb-3">
+                        <label for="numeroLote" class="form-label required">Número de Lote</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="numeroLote" 
+                               th:field="*{numeroLote}" 
+                               required 
+                               maxlength="50"
+                               placeholder="Ej: LT-2024-001">
+                        <div class="form-text">Código único del lote</div>
+                    </div>
+
+                    <!-- Producto -->
+                    <div class="col-md-6 mb-3">
+                        <label for="producto" class="form-label required">Producto</label>
+                        <select class="form-select select2" 
+                                id="producto" 
+                                th:field="*{producto.id}" 
+                                required>
+                            <option value="">-- Seleccione un producto --</option>
+                            <option th:each="producto : ${productos}" 
+                                    th:value="${producto.id}"
+                                    th:text="${producto.codigo + ' - ' + producto.nombre}">
+                            </option>
+                        </select>
+                        <div class="form-text">Producto al que pertenece el lote</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Cantidad Inicial -->
+                    <div class="col-md-6 mb-3">
+                        <label for="cantidadInicial" class="form-label required">Cantidad Inicial</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="cantidadInicial" 
+                               th:field="*{cantidadInicial}" 
+                               min="0" 
+                               step="1"
+                               required>
+                        <div class="form-text">Cantidad al ingresar</div>
+                    </div>
+
+                    <!-- Cantidad Actual -->
+                    <div class="col-md-6 mb-3">
+                        <label for="cantidadActual" class="form-label">Cantidad Actual</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="cantidadActual" 
+                               th:field="*{cantidadActual}" 
+                               min="0" 
+                               step="1">
+                        <div class="form-text">Cantidad disponible actual</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Fecha de Fabricación -->
+                    <div class="col-md-6 mb-3">
+                        <label for="fechaFabricacion" class="form-label">Fecha de Fabricación</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="fechaFabricacion" 
+                               th:field="*{fechaFabricacion}">
+                        <div class="form-text">Fecha de producción del lote</div>
+                    </div>
+
+                    <!-- Fecha de Vencimiento -->
+                    <div class="col-md-6 mb-3">
+                        <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="fechaVencimiento" 
+                               th:field="*{fechaVencimiento}">
+                        <div class="form-text">Fecha de caducidad del producto</div>
+                    </div>
+                </div>
+
+                <!-- Estado Activo -->
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="activo" 
+                               th:field="*{activo}"
+                               checked>
+                        <label class="form-check-label" for="activo">
+                            <strong>Lote Activo</strong>
+                            <br/>
+                            <small class="text-muted">Los lotes inactivos no estarán disponibles para movimientos</small>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex justify-content-between mt-4">
+                    <a th:href="@{/lotes}" class="btn btn-cancel">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-submit text-white">
+                        <i class="fas fa-save me-2"></i>Guardar Lote
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Inicializar Select2
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            // Validación: cantidad actual no puede ser mayor que inicial
+            $('#cantidadActual').on('input', function() {
+                const cantidadInicial = parseInt($('#cantidadInicial').val()) || 0;
+                const cantidadActual = parseInt($(this).val()) || 0;
+
+                if (cantidadActual > cantidadInicial) {
+                    $(this).val(cantidadInicial);
+                    alert('La cantidad actual no puede ser mayor que la cantidad inicial');
+                }
+            });
+
+            // Validación: fecha de vencimiento debe ser posterior a fabricación
+            $('#fechaVencimiento').on('change', function() {
+                const fechaFab = $('#fechaFabricacion').val();
+                const fechaVenc = $(this).val();
+
+                if (fechaFab && fechaVenc && fechaVenc <= fechaFab) {
+                    alert('La fecha de vencimiento debe ser posterior a la fecha de fabricación');
+                    $(this).val('');
+                }
+            });
+
+            // Auto-completar cantidad actual con cantidad inicial si está vacía
+            $('#cantidadInicial').on('blur', function() {
+                if (!$('#cantidadActual').val()) {
+                    $('#cantidadActual').val($(this).val());
+                }
+            });
+        });
+    </script>
+</body>
+</html>

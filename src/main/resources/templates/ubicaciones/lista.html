@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubicaciones de Almacén - Sistema de Inventario</title>
+    <th:block th:replace="~{fragments/header::head(title='Ubicaciones')}"></th:block>
+</head>
+<body>
+    <th:block th:replace="~{fragments/header::header(pageTitle='Gestión de Ubicaciones', pageIcon='fas fa-warehouse')}"></th:block>
+    
+    <div class="main-content">
+        <div class="container-fluid">
+            <!-- Alertas -->
+            <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${param.success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show auto-dismiss" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span th:text="${param.error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Botón y estadísticas -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">Gestión de Ubicaciones</h4>
+                <a th:href="@{/ubicaciones/nuevo}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nueva Ubicación
+                </a>
+            </div>
+            
+            <!-- Estadísticas -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card primary h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="stat-icon">
+                                <i class="fas fa-layer-group"></i>
+                            </div>
+                            <h5 class="stat-value" th:text="${totalUbicaciones} ?: '0'">0</h5>
+                            <span class="stat-label">Total Ubicaciones</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card warning h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="stat-icon">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <h5 class="stat-value" th:text="${totalZonas} ?: '0'">0</h5>
+                            <span class="stat-label">Zonas Principales</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card danger h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="stat-icon">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                            <h5 class="stat-value" th:text="${capacidadUtilizada} ?: '0'">0</h5>
+                            <span class="stat-label">Capacidad Utilizada</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card stat-card success h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="stat-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <h5 class="stat-value" th:text="${porcentajeUtilizado} ?: '0'">0%</h5>
+                            <span class="stat-label">Porcentaje de Uso</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tabla de Ubicaciones -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list"></i> Lista de Ubicaciones
+                        <span class="badge bg-secondary" th:text="${#lists.size(ubicaciones)}">0</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover datatable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Tipo</th>
+                                    <th>Capacidad</th>
+                                    <th>Ubicación Padre</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="ubicacion : ${ubicaciones}">
+                                    <td><strong th:text="${ubicacion.codigo}"></strong></td>
+                                    <td th:text="${ubicacion.nombre}"></td>
+                                    <td>
+                                        <span class="badge bg-info" th:text="${ubicacion.tipo}"></span>
+                                    </td>
+                                    <td>
+                                        <div th:if="${ubicacion.capacidadMaxima != null}">
+                                            <span th:text="${ubicacion.capacidadActual} + '/' + ${ubicacion.capacidadMaxima}"></span>
+                                            <div class="progress" style="height: 5px;">
+                                                <div class="progress-bar" th:style="'width: ' + (${ubicacion.capacidadActual} * 100.0 / ${ubicacion.capacidadMaxima}) + '%'"></div>
+                                            </div>
+                                        </div>
+                                        <span th:if="${ubicacion.capacidadMaxima == null}" class="text-muted">Sin límite</span>
+                                    </td>
+                                    <td th:text="${ubicacion.ubicacionPadre?.nombre} ?: '-'"></td>
+                                    <td>
+                                        <span class="badge" th:classappend="${ubicacion.activa} ? 'bg-success' : 'bg-danger'" 
+                                              th:text="${ubicacion.activa} ? 'Activa' : 'Inactiva'"></span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a th:href="@{/ubicaciones/editar/{id}(id=${ubicacion.id})}" class="btn btn-outline-secondary" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a th:href="@{/ubicaciones/eliminar/{id}(id=${ubicacion.id})}" class="btn btn-outline-danger btn-delete" title="Eliminar" 
+                                               th:attr="data-confirm-message='¿Está seguro de eliminar la ubicación ' + ${ubicacion.nombre} + '?'">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div th:if="${#lists.isEmpty(ubicaciones)}" class="text-center py-5">
+                        <i class="fas fa-warehouse fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No hay ubicaciones registradas</h4>
+                        <p class="text-muted">Comienza creando la primera ubicación del almacén</p>
+                        <a th:href="@{/ubicaciones/nuevo}" class="btn btn-primary mt-3">
+                            <i class="fas fa-plus"></i> Crear Primera Ubicación
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <th:block th:replace="~{fragments/footer::footer}"></th:block>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-ocultar alertas
+            $('.alert.auto-dismiss').each(function() {
+                const alert = $(this);
+                setTimeout(function() {
+                    alert.fadeOut('slow', function() {
+                        alert.remove();
+                    });
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>

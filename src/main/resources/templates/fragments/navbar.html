@@ -1,0 +1,85 @@
+<!-- FRAGMENTO PARA AGREGAR AL NAVBAR -->
+<!-- Ubicación: templates/fragments/navbar.html o donde tengas tu navbar -->
+<!-- Agregar ANTES del cierre del </ul> principal del navbar -->
+
+<!-- Menú de Usuario (Derecha) -->
+<ul class="navbar-nav ms-auto">
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle d-flex align-items-center" 
+           href="#" 
+           id="userDropdown" 
+           role="button" 
+           data-bs-toggle="dropdown" 
+           aria-expanded="false">
+            <div class="user-avatar me-2">
+                <i class="fas fa-user-circle fa-lg"></i>
+            </div>
+            <span class="d-none d-md-inline">
+                <span sec:authentication="principal.username">Usuario</span>
+            </span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li>
+                <div class="dropdown-header">
+                    <i class="fas fa-user me-2"></i>
+                    <strong sec:authentication="principal.username">Usuario</strong>
+                </div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item" href="/perfil">
+                    <i class="fas fa-user-circle me-2"></i>Mi Perfil
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item text-danger" href="/logout">
+                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                </a>
+            </li>
+        </ul>
+    </li>
+</ul>
+
+
+<style>
+/* Estilos para el menú de usuario */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #667eea;
+}
+
+#userDropdown {
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    transition: all 0.3s;
+}
+
+#userDropdown:hover {
+    background-color: rgba(102, 126, 234, 0.1);
+}
+
+.dropdown-header {
+    font-size: 0.9rem;
+    color: #667eea;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+    padding-left: 1.5rem;
+}
+
+.dropdown-item i {
+    width: 20px;
+    text-align: center;
+}
+</style>

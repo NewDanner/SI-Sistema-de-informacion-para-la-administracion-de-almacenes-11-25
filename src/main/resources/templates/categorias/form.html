@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${categoria.id != null} ? 'Editar Categoría' : 'Nueva Categoría'">Formulario Categoría</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .form-container {
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        }
+        .form-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-center;
+            margin-bottom: 2rem;
+        }
+        .form-header h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #6f42c1;
+            box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%);
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        .btn-cancel {
+            background-color: #6c757d;
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            border-radius: 8px;
+            color: white;
+        }
+        .info-card {
+            background: #f8f9fa;
+            border-left: 4px solid #6f42c1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .required::after {
+            content: "*";
+            color: #dc3545;
+            margin-left: 4px;
+        }
+        .icon-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6f42c1 0%, #9b59b6 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 20px;
+            box-shadow: 0 5px 15px rgba(111, 66, 193, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <!-- Header -->
+            <div class="form-header">
+                <div class="icon-preview">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <h2 th:text="${categoria.id != null} ? 'Editar Categoría' : 'Registrar Nueva Categoría'">Formulario de Categoría</h2>
+                <p class="mb-0 mt-2">Complete los datos de la categoría</p>
+            </div>
+
+            <!-- ✅ ALERTAS DE ÉXITO/ERROR -->
+            <div th:if="${success}" 
+                 class="alert alert-success alert-dismissible fade show" 
+                 role="alert">
+                <i class="fas fa-check-circle"></i>
+                <strong>¡Éxito!</strong> <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div th:if="${error}" 
+                 class="alert alert-danger alert-dismissible fade show" 
+                 role="alert">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Error:</strong> <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Información -->
+            <div class="info-card">
+                <i class="fas fa-info-circle text-primary"></i> 
+                <strong>Importante:</strong> Las categorías ayudan a organizar y clasificar los productos del inventario.
+            </div>
+
+            <!-- Formulario -->
+            <form th:action="@{/categorias/guardar}" th:object="${categoria}" method="post">
+                <input type="hidden" th:field="*{id}"/>
+
+                <!-- Nombre -->
+                <div class="mb-3">
+                    <label for="nombre" class="form-label required">Nombre de la Categoría</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="nombre" 
+                           th:field="*{nombre}" 
+                           required 
+                           maxlength="100"
+                           placeholder="Ej: Medicamentos, Suplementos, Material de Curación">
+                    <div class="form-text">Nombre descriptivo de la categoría (debe ser único)</div>
+                </div>
+
+                <!-- Descripción -->
+                <div class="mb-3">
+                    <label for="descripcion" class="form-label">Descripción</label>
+                    <textarea class="form-control" 
+                              id="descripcion" 
+                              th:field="*{descripcion}" 
+                              rows="4" 
+                              maxlength="500"
+                              placeholder="Descripción detallada de la categoría y los tipos de productos que incluye..."></textarea>
+                    <div class="form-text">Información adicional sobre la categoría (opcional)</div>
+                </div>
+
+                <!-- Estado -->
+                <div class="mb-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" 
+                               type="checkbox" 
+                               id="activa" 
+                               th:field="*{activa}"
+                               checked>
+                        <label class="form-check-label" for="activa">
+                            <strong>Categoría Activa</strong>
+                            <br/>
+                            <small class="text-muted">Las categorías inactivas no aparecerán en los formularios de productos</small>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex justify-content-between mt-4">
+                    <a th:href="@{/categorias}" class="btn btn-cancel">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-submit text-white">
+                        <i class="fas fa-save me-2"></i>Guardar Categoría
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Auto-cerrar alertas después de 5 segundos
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+
+            // Validación de formulario
+            $('form').on('submit', function(e) {
+                const nombre = $('#nombre').val().trim();
+
+                if (!nombre) {
+                    e.preventDefault();
+                    alert('El nombre de la categoría es requerido');
+                    $('#nombre').focus();
+                    return false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

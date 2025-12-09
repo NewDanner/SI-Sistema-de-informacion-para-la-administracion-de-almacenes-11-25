@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Seguro - Sistema de Inventario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --primary-dark: #1a252f;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .register-container {
+            max-width: 1100px;
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 50px 35px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            position: relative;
+        }
+        
+        @media (min-width: 768px) {
+            .header-section {
+                width: 45%;
+            }
+        }
+        
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            z-index: 0;
+        }
+        
+        .header-section i {
+            font-size: 4.5rem;
+            color: white;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            margin-bottom: 25px;
+            z-index: 1;
+        }
+        
+        .header-section h1 {
+            font-weight: 800;
+            font-size: 2.3rem;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 15px;
+            z-index: 1;
+        }
+        
+        .header-section p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.15rem;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            z-index: 1;
+        }
+        
+        /* MEJORA: Badges de seguridad rediseñados */
+        .security-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            z-index: 1;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        @media (min-width: 576px) {
+            .security-badge {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+        }
+        
+        /* MEJORA: Badges más pequeños y mejor diseñados */
+        .badge-security {
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+            min-width: fit-content;
+            flex-shrink: 0;
+        }
+        
+        @media (min-width: 576px) {
+            .badge-security {
+                font-size: 0.8rem;
+                padding: 7px 14px;
+            }
+        }
+        
+        .badge-admin {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.4);
+        }
+        
+        .badge-secure {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid rgba(46, 204, 113, 0.4);
+        }
+        
+        .badge-verified {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.4);
+        }
+        
+        /* MEJORA: Badges de versión más compactos */
+        .version-badges {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            z-index: 1;
+        }
+        
+        .version-badges .badge {
+            font-size: 0.75rem;
+            padding: 5px 10px;
+        }
+        
+        .form-section {
+            padding: 40px 30px;
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .form-section {
+                width: 55%;
+            }
+        }
+        
+        .form-title {
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .master-key-section {
+            background: rgba(52, 152, 219, 0.08);
+            border: 1px solid rgba(52, 152, 219, 0.2);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 30px;
+        }
+        
+        .master-key-section .fas {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin-right: 10px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            height: calc(2.75rem + 2px);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+            transform: translateY(-2px);
+        }
+        
+        .form-control::placeholder {
+            color: #aaa;
+        }
+        
+        .form-divider {
+            border-top: 2px dashed rgba(52, 152, 219, 0.3);
+            margin: 25px 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .form-divider span {
+            background: white;
+            padding: 0 15px;
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .password-toggle {
+            border: none;
+            background: transparent;
+            padding: 0 10px;
+            cursor: pointer;
+            color: #777;
+            transition: all 0.3s;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .password-toggle:hover {
+            color: var(--secondary);
+            background: rgba(52, 152, 219, 0.1);
+        }
+        
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-radius: 10px 0 0 10px;
+            border-right: none;
+            color: #777;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, var(--secondary), #1a5276);
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+            width: 100%;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.6);
+        }
+        
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        
+        .btn-back {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+            width: 100%;
+        }
+        
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        }
+        
+        .required::after {
+            content: "*";
+            color: var(--danger);
+            margin-left: 4px;
+        }
+        
+        .security-info {
+            background: rgba(39, 174, 96, 0.08);
+            border: 1px solid rgba(39, 174, 96, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            font-size: 0.95rem;
+        }
+        
+        .security-info h6 {
+            color: #27ae60;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .security-info ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+        
+        .security-info li {
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+        
+        .role-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        
+        .badge-role {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .role-admin { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+        .role-gerente { background: rgba(241, 196, 15, 0.2); color: #f1c40f; }
+        .role-almacenero { background: rgba(52, 152, 219, 0.2); color: #3498db; }
+        .role-consultor { background: rgba(142, 68, 173, 0.2); color: #8e44ad; }
+        
+        .progress-password {
+            height: 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-weak { background-color: #e74c3c; }
+        .progress-bar-medium { background-color: #f39c12; }
+        .progress-bar-strong { background-color: #27ae60; }
+        
+        .footer-section {
+            text-align: center;
+            margin-top: 25px;
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 767px) {
+            .header-section, .form-section {
+                width: 100%;
+            }
+            
+            .header-section {
+                padding: 30px 20px;
+            }
+            
+            .form-section {
+                padding: 30px 20px;
+            }
+            
+            .header-section h1 {
+                font-size: 1.8rem;
+            }
+            
+            .header-section p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="header-section">
+            <i class="fas fa-shield-alt"></i>
+            <h1>Registro Seguro</h1>
+            <p>Acceso restringido para administradores y personal autorizado</p>
+            
+            <!-- MEJORA: Badges de seguridad reorganizados -->
+            <div class="security-badge">
+                <span class="badge-security badge-admin">
+                    <i class="fas fa-user-secret"></i> Acceso Autorizado
+                </span>
+                <span class="badge-security badge-secure">
+                    <i class="fas fa-lock"></i> Encriptación AES-256
+                </span>
+                <span class="badge-security badge-verified">
+                    <i class="fas fa-shield-alt"></i> Auditoría Completa
+                </span>
+            </div>
+            
+            <!-- MEJORA: Badges de versión reorganizados -->
+            <div class="version-badges">
+                <span class="badge bg-light text-dark">V1.0</span>
+                <span class="badge bg-success">Seguro</span>
+                <span class="badge bg-info">2025</span>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h2 class="form-title">
+                <i class="fas fa-user-plus"></i> Crear Nueva Cuenta
+            </h2>
+            
+            <!-- Alertas -->
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <span th:text="${error}">Error en el registro</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${success}">Usuario registrado exitosamente</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            
+            <div th:if="${info}" class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                <span th:text="${info}">Información importante</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            
+            <!-- Formulario de Clave Maestra -->
+            <div th:if="${showMasterKeyForm == true}">
+                <div class="master-key-section">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-key"></i>
+                        <div>
+                            <h5 class="mb-0">Verificación de Acceso</h5>
+                            <p class="mb-0">Se requiere clave maestra para registrar usuarios</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <form th:action="@{/secure-register/verify}" method="post" id="masterKeyForm">
+                    <div class="mb-4">
+                        <label for="masterKeyInput" class="form-label required">
+                            <i class="fas fa-lock me-2"></i>Clave Maestra de Administrador
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-key"></i>
+                            </span>
+                            <input type="password" class="form-control" id="masterKeyInput" name="masterKeyInput" 
+                                   placeholder="Ingrese la clave de autorización" required 
+                                   th:value="${masterKeyInput}">
+                            <button type="button" class="password-toggle" id="toggleMasterKey" 
+                                    title="Mostrar/ocultar clave">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Esta clave es confidencial y solo debe ser proporcionada por el administrador del sistema
+                        </small>
+                    </div>
+                    
+                    <div class="d-grid gap-3">
+                        <button type="submit" class="btn btn-submit">
+                            <i class="fas fa-key me-2"></i>Verificar y Continuar
+                        </button>
+                        <a th:href="@{/login}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Volver al Login
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Formulario de Registro -->
+            <div th:if="${showMasterKeyForm == false}">
+                <div class="master-key-section">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <div>
+                            <h5 class="mb-0">Clave Maestra Verificada</h5>
+                            <p class="mb-0">Complete la información del nuevo usuario</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-divider">
+                    <span><i class="fas fa-user-plus me-2"></i>Información del Usuario</span>
+                </div>
+                
+                <form th:action="@{/secure-register/register}" method="post" id="registerForm" th:object="${usuario}">
+                    <input type="hidden" th:field="*{id}"/>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label required">Nombre de Usuario</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       th:field="*{username}" required placeholder="Ej: admin_juan" 
+                                       maxlength="50" th:value="${usuario != null ? usuario.username : ''}">
+                            </div>
+                            <small class="text-muted">Solo letras, números y guiones bajos. Mínimo 4 caracteres</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label required">Correo Electrónico</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       th:field="*{email}" required placeholder="usuario@dominio.com" 
+                                       maxlength="100" th:value="${usuario != null ? usuario.email : ''}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="nombreCompleto" class="form-label required">Nombre Completo</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user-tag"></i>
+                            </span>
+                            <input type="text" class="form-control" id="nombreCompleto" name="nombreCompleto" 
+                                   th:field="*{nombreCompleto}" required placeholder="Nombre completo del usuario" 
+                                   maxlength="150" th:value="${usuario != null ? usuario.nombreCompleto : ''}">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="passwordHash" class="form-label required">Contraseña</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control" id="passwordHash" name="passwordHash" 
+                                       th:field="*{passwordHash}" required placeholder="Contraseña segura" 
+                                       minlength="6" th:value="${usuario != null ? usuario.passwordHash : ''}">
+                                <button type="button" class="password-toggle" id="togglePasswordHash" 
+                                        title="Mostrar/ocultar contraseña">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="progress-password mt-2">
+                                <div class="progress-bar progress-bar-weak" role="progressbar" style="width: 20%"></div>
+                            </div>
+                            <small class="text-muted">Mínimo 6 caracteres con letras y números</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirmPassword" class="form-label required">Confirmar Contraseña</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
+                                       required placeholder="Repetir contraseña" minlength="6">
+                                <button type="button" class="password-toggle" id="toggleConfirmPassword" 
+                                        title="Mostrar/ocultar contraseña">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Las contraseñas deben coincidir</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="rolId" class="form-label required">Rol del Usuario</label>
+                        <select class="form-select" id="rolId" name="rolId" required>
+                            <option value="">-- Seleccione un rol --</option>
+                            <option th:each="rol:${roles}" th:value="${rol.id}" 
+                                    th:text="${rol.nombre + ' (' + rol.codigo + ')'}" 
+                                    th:selected="${usuario != null && usuario.rol != null && usuario.rol.id == rol.id}">
+                            </option>
+                        </select>
+                        <div class="form-text mt-2">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-shield-alt me-2 text-primary"></i>
+                                <small>
+                                    Asigne los permisos adecuados según las responsabilidades:
+                                    <div class="role-badges">
+                                        <span class="badge-role role-admin">ADMIN</span>
+                                        <span class="badge-role role-gerente">GERENTE</span>
+                                        <span class="badge-role role-almacenero">ALMACENERO</span>
+                                        <span class="badge-role role-consultor">CONSULTOR</span>
+                                    </div>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-divider">
+                        <span><i class="fas fa-cog me-2"></i>Configuración Adicional</span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="activo" name="activo" checked>
+                            <label class="form-check-label" for="activo">
+                                Usuario activo (puede iniciar sesión inmediatamente)
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="cambiarPassword" name="cambiarPassword" checked>
+                            <label class="form-check-label" for="cambiarPassword">
+                                Requiere cambiar contraseña en el primer inicio de sesión
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-3">
+                        <button type="submit" class="btn btn-submit">
+                            <i class="fas fa-user-plus me-2"></i>Registrar Usuario
+                        </button>
+                        <button type="button" class="btn btn-back" onclick="window.location.href='/login'">
+                            <i class="fas fa-arrow-left me-2"></i>Volver al Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Información de Seguridad -->
+            <div class="security-info">
+                <h6>
+                    <i class="fas fa-shield-alt me-2"></i>Políticas de Seguridad
+                </h6>
+                <ul class="mb-0">
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Solo el personal autorizado puede crear usuarios</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>La clave maestra es confidencial y debe protegerse</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Todas las acciones de registro son auditadas</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Las contraseñas se almacenan con encriptación segura</li>
+                    <li><i class="fas fa-check-circle text-success me-2"></i>Se requiere autenticación de dos factores para roles administrativos</li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <p>
+                    <i class="fas fa-info-circle me-1"></i> Sistema de Inventario Droguería Inti v1.0
+                    <br>
+                    <small class="text-muted">© 2025 Todos los derechos reservados</small>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Función para mostrar/ocultar contraseña
+            function setupTogglePassword(buttonId, inputId) {
+                const toggleButton = document.querySelector(buttonId);
+                const input = document.querySelector(inputId);
+                
+                if (toggleButton && input) {
+                    toggleButton.addEventListener('click', function() {
+                        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                        input.setAttribute('type', type);
+                        
+                        // Cambiar icono
+                        const icon = this.querySelector('i');
+                        if (type === 'text') {
+                            icon.classList.remove('fa-eye');
+                            icon.classList.add('fa-eye-slash');
+                        } else {
+                            icon.classList.remove('fa-eye-slash');
+                            icon.classList.add('fa-eye');
+                        }
+                    });
+                }
+            }
+            
+            // Configurar todos los botones de mostrar/ocultar
+            setupTogglePassword('#toggleMasterKey', '#masterKeyInput');
+            setupTogglePassword('#togglePasswordHash', '#passwordHash');
+            setupTogglePassword('#toggleConfirmPassword', '#confirmPassword');
+            
+            // Validación de contraseñas
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', function(e) {
+                    const password = document.getElementById('passwordHash');
+                    const confirmPassword = document.getElementById('confirmPassword');
+                    const rolSelect = document.getElementById('rolId');
+                    
+                    if (password && confirmPassword) {
+                        if (password.value !== confirmPassword.value) {
+                            e.preventDefault();
+                            alert('Las contraseñas no coinciden. Por favor, verifique.');
+                            confirmPassword.focus();
+                            return;
+                        }
+                        
+                        if (password.value.length < 6) {
+                            e.preventDefault();
+                            alert('La contraseña debe tener al menos 6 caracteres.');
+                            password.focus();
+                            return;
+                        }
+                    }
+                    
+                    // Validar que se haya seleccionado un rol
+                    if (rolSelect && rolSelect.value === "") {
+                        e.preventDefault();
+                        alert('Por favor seleccione un rol para el usuario.');
+                        rolSelect.focus();
+                    }
+                });
+            }
+            
+            // Auto-focus en el campo de clave maestra
+            const masterKeyInput = document.getElementById('masterKeyInput');
+            if (masterKeyInput) {
+                masterKeyInput.focus();
+            }
+            
+            // Evaluación de fortaleza de contraseña
+            const passwordInput = document.getElementById('passwordHash');
+            if (passwordInput) {
+                passwordInput.addEventListener('input', function() {
+                    const progressBar = this.parentElement.nextElementSibling.querySelector('.progress-bar');
+                    const password = this.value;
+                    let strength = 0;
+                    
+                    if (password.length >= 6) strength++;
+                    if (password.match(/[a-z]+/)) strength++;
+                    if (password.match(/[A-Z]+/)) strength++;
+                    if (password.match(/[0-9]+/)) strength++;
+                    if (password.match(/[^a-zA-Z0-9]+/)) strength++;
+                    
+                    let width = Math.min(100, strength * 20);
+                    let colorClass = 'progress-bar-weak';
+                    
+                    if (strength >= 3) colorClass = 'progress-bar-medium';
+                    if (strength >= 4) colorClass = 'progress-bar-strong';
+                    
+                    progressBar.className = 'progress-bar ' + colorClass;
+                    progressBar.style.width = width + '%';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

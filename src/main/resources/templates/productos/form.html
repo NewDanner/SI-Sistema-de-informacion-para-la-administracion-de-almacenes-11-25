@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${producto.id != null} ? 'Editar Producto' : 'Nuevo Producto'">Formulario Producto</title>
+    <th:block th:replace="~{fragments/header :: head(title='Formulario Producto')}"></th:block>
+</head>
+<body>
+    <th:block th:replace="~{fragments/header :: header(pageTitle='Formulario de Producto', pageIcon='fas fa-box')}"></th:block>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form th:action="@{/productos/guardar}" th:object="${producto}" method="post">
+                        <input type="hidden" th:field="*{id}" />
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="codigo" class="form-label">Código *</label>
+                                <input type="text" class="form-control" id="codigo" th:field="*{codigo}" 
+                                       required maxlength="50">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="nombre" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="nombre" th:field="*{nombre}" 
+                                       required maxlength="200">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" th:field="*{descripcion}" 
+                                      rows="3" maxlength="500"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="categoria" class="form-label">Categoría</label>
+                                <select class="form-select select2" id="categoria" th:field="*{categoria}">
+                                    <option value="">Seleccionar categoría</option>
+                                    <option th:each="categoria : ${categorias}" 
+                                            th:value="${categoria.id}"
+                                            th:text="${categoria.nombre}">
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="unidadMedida" class="form-label">Unidad de Medida *</label>
+                                <select class="form-select" id="unidadMedida" th:field="*{unidadMedida}" required>
+                                    <option value="">Seleccionar unidad</option>
+                                    <option value="unidad">Unidad</option>
+                                    <option value="caja">Caja</option>
+                                    <option value="frasco">Frasco</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="precioCompra" class="form-label">Precio Compra</label>
+                                <input type="number" class="form-control" id="precioCompra" 
+                                       th:field="*{precioCompra}" step="0.01" min="0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="precioVenta" class="form-label">Precio Venta</label>
+                                <input type="number" class="form-control" id="precioVenta" 
+                                       th:field="*{precioVenta}" step="0.01" min="0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="stockMinimo" class="form-label">Stock Mínimo *</label>
+                                <input type="number" class="form-control" id="stockMinimo" 
+                                       th:field="*{stockMinimo}" min="0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                            <a th:href="@{/productos}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+</body>
+</html>

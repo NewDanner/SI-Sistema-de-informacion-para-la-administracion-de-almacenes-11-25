@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría - Sistema de Inventario</title>
+    <th:block th:replace="~{fragments/header::head(title='Auditoría')}"></th:block>
+    <style>
+        .operation-insert { background-color: #d4edda !important; }
+        .operation-update { background-color: #fff3cd !important; }
+        .operation-delete { background-color: #f8d7da !important; }
+        .json-viewer {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+        .stat-card {
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: all 0.3s;
+            height: 160px;
+            position: relative;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        .stat-card .stat-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 3rem;
+            opacity: 0.1;
+            z-index: 0;
+        }
+        .stat-card .card-body {
+            position: relative;
+            z-index: 1;
+        }
+        .stat-card .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        .stat-card .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <th:block th:replace="~{fragments/header::header(pageTitle='Auditoría del Sistema', pageIcon='fas fa-clipboard-check')}"></th:block>
+
+    <div class="row mb-4">
+        <!-- Inserciones -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card stat-card border-success h-100">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-plus-circle text-success"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${totalInserciones} ?: '0'">0</h5>
+                    <span class="stat-label">Inserciones</span>
+                </div>
+            </div>
+        </div>
+        <!-- Actualizaciones -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card stat-card border-warning h-100">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-edit text-warning"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${totalActualizaciones} ?: '0'">0</h5>
+                    <span class="stat-label">Actualizaciones</span>
+                </div>
+            </div>
+        </div>
+        <!-- Eliminaciones -->
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card stat-card border-danger h-100">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-trash text-danger"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${totalEliminaciones} ?: '0'">0</h5>
+                    <span class="stat-label">Eliminaciones</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2"></i>Filtros de Auditoría
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Filtrar por Tabla</label>
+                    <select class="form-select" onchange="filtrarPorTabla(this.value)">
+                        <option value="">Todas las tablas</option>
+                        <option value="productos">Productos</option>
+                        <option value="movimientos">Movimientos</option>
+                        <option value="usuarios">Usuarios</option>
+                        <option value="categorias">Categorías</option>
+                        <option value="proveedores">Proveedores</option>
+                        <option value="lotes">Lotes</option>
+                        <option value="ubicaciones">Ubicaciones</option>
+                        <option value="transferencias">Transferencias</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Inicio</label>
+                    <input type="datetime-local" class="form-control" id="fechaInicio">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha Fin</label>
+                    <input type="datetime-local" class="form-control" id="fechaFin">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" onclick="buscarPorFechas()">
+                        <i class="fas fa-search me-1"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Auditorías -->
+    <div class="card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>Registros de Auditoría
+                <span class="badge bg-info ms-2" th:text="${totalAuditorias} + ' registros hoy'"></span>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover datatable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Tabla</th>
+                            <th>Operación</th>
+                            <th>Registro ID</th>
+                            <th>Usuario</th>
+                            <th>IP</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="auditoria : ${auditorias}" th:classappend="${auditoria.operacion.name() == 'INSERT'} ? 'operation-insert' : (${auditoria.operacion.name() == 'UPDATE'} ? 'operation-update' : 'operation-delete')">
+                            <td th:text="${#temporals.format(auditoria.fechaOperacion, 'dd/MM/yyyy HH:mm:ss')}"></td>
+                            <td>
+                                <span class="badge bg-secondary" th:text="${auditoria.tablaAfectada}"></span>
+                            </td>
+                            <td>
+                                <span th:if="${auditoria.operacion.name() == 'INSERT'}" class="badge bg-success">
+                                    <i class="fas fa-plus"></i> INSERT
+                                </span>
+                                <span th:if="${auditoria.operacion.name() == 'UPDATE'}" class="badge bg-warning text-dark">
+                                    <i class="fas fa-edit"></i> UPDATE
+                                </span>
+                                <span th:if="${auditoria.operacion.name() == 'DELETE'}" class="badge bg-danger">
+                                    <i class="fas fa-trash"></i> DELETE
+                                </span>
+                            </td>
+                            <td th:text="${auditoria.registroId}"></td>
+                            <td>
+                                <span th:if="${auditoria.usuario != null}" th:text="${auditoria.usuario.nombreCompleto}"></span>
+                                <span th:if="${auditoria.usuario == null}" class="text-muted">Sistema</span>
+                            </td>
+                            <td>
+                                <small class="text-muted" th:text="${auditoria.ipAddress}"></small>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info" 
+                                        data-bs-toggle="modal" 
+                                        th:attr="data-bs-target='#detalleModal'+${auditoria.id}" 
+                                        title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${#lists.isEmpty(auditorias)}" class="text-center py-5">
+                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No hay registros de auditoría</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales de Detalles -->
+    <div th:each="auditoria : ${auditorias}" class="modal fade" th:id="'detalleModal'+${auditoria.id}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i> Detalles de Auditoría
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Tabla:</strong> <span th:text="${auditoria.tablaAfectada}"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Operación:</strong> <span th:text="${auditoria.operacion.name()}"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Usuario:</strong> 
+                            <span th:if="${auditoria.usuario != null}" th:text="${auditoria.usuario.nombreCompleto}"></span>
+                            <span th:if="${auditoria.usuario == null}" class="text-muted">Sistema</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>IP:</strong> <span th:text="${auditoria.ipAddress}"></span>
+                        </div>
+                    </div>
+                    <div th:if="${auditoria.datosAnteriores != null}">
+                        <h6 class="mt-3"><i class="fas fa-history me-2"></i>Datos Anteriores:</h6>
+                        <div class="json-viewer" th:text="${auditoria.datosAnteriores}"></div>
+                    </div>
+                    <div th:if="${auditoria.datosNuevos != null}" class="mt-3">
+                        <h6><i class="fas fa-plus-circle me-2"></i>Datos Nuevos:</h6>
+                        <div class="json-viewer" th:text="${auditoria.datosNuevos}"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{fragments/footer::footer}"></th:block>
+    
+    <script th:inline="javascript">
+        function filtrarPorTabla(tabla) {
+            if(tabla) {
+                window.location.href = '/auditoria/tabla/' + tabla;
+            } else {
+                window.location.href = '/auditoria';
+            }
+        }
+        
+        function buscarPorFechas() {
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            
+            if(fechaInicio && fechaFin) {
+                window.location.href = `/auditoria/buscar?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`;
+            } else {
+                alert('Por favor, selecciona ambas fechas');
+            }
+        }
+        
+        // Formatear JSON en los viewers
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.json-viewer').forEach(function(element) {
+                try {
+                    const json = JSON.parse(element.textContent);
+                    element.textContent = JSON.stringify(json, null, 2);
+                } catch(e) {
+                    // Si no es JSON válido, dejar como está
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos - Sistema de Inventario</title>
+    <th:block th:replace="~{fragments/header :: head(title='Productos')}"></th:block>
+</head>
+<body>
+
+    <!-- Incluir Header: Navbar + Sidebar + Container -->
+    <th:block th:replace="~{fragments/header :: header(pageTitle='Gestión de Productos', pageIcon='fas fa-boxes')}"></th:block>
+
+    <!-- CONTENIDO DE LA PÁGINA DE PRODUCTOS -->
+    
+    <!-- Alertas -->
+    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show auto-dismiss">
+        <i class="fas fa-check-circle"></i>
+        <span th:text="${param.success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    
+    <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show auto-dismiss">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span th:text="${param.error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Botón Nuevo Producto -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Lista de Productos</h4>
+        <a th:href="@{/productos/nuevo}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuevo Producto
+        </a>
+    </div>
+
+    <!-- Resumen de Stock -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card primary h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${#lists.size(productos)} ?: '0'">0</h5>
+                    <span class="stat-label">Total Productos</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card warning h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${productosStockBajo} ?: '0'">0</h5>
+                    <span class="stat-label">Stock Bajo</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card danger h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${productosAgotados} ?: '0'">0</h5>
+                    <span class="stat-label">Agotados</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card success h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h5 class="stat-value" th:text="${#lists.size(productos) - productosStockBajo - productosAgotados} ?: '0'">0</h5>
+                    <span class="stat-label">Stock Normal</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Productos -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list"></i> Lista de Productos
+                <span class="badge bg-secondary" th:text="${#lists.size(productos)}">0</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover datatable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Stock</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="producto : ${productos}">
+                            <td><strong th:text="${producto.codigo}"></strong></td>
+                            <td th:text="${producto.nombre}"></td>
+                            <td>
+                                <span th:text="${producto.stockActual}"></span>
+                                <small class="text-muted" th:text="' ' + ${producto.unidadMedida}"></small>
+                            </td>
+                            <td>
+                                <span th:if="${producto.stockActual == 0}" class="badge bg-danger">AGOTADO</span>
+                                <span th:if="${producto.stockActual > 0 and producto.stockActual <= producto.stockMinimo}" class="badge bg-warning">STOCK BAJO</span>
+                                <span th:if="${producto.stockActual > producto.stockMinimo}" class="badge bg-success">NORMAL</span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a th:href="@{/productos/editar/{id}(id=${producto.id})}" 
+                                       class="btn btn-outline-secondary"
+                                       data-bs-toggle="tooltip" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a th:href="@{/productos/eliminar/{id}(id=${producto.id})}" 
+                                        class="btn btn-outline-danger btn-delete"
+                                        data-bs-toggle="tooltip" title="Eliminar"
+                                        th:attr="data-producto-nombre=${producto.nombre}">
+                                         <i class="fas fa-trash"></i>
+                                     </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${#lists.isEmpty(productos)}" class="text-center py-5">
+                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No se encontraron productos</h4>
+                <a th:href="@{/productos/nuevo}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus"></i> Agregar Primer Producto
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incluir Footer -->
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-delete').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    const nombreProducto = this.getAttribute('data-producto-nombre');
+                    if (!confirm('¿Está seguro de eliminar "' + nombreProducto + '"?')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>

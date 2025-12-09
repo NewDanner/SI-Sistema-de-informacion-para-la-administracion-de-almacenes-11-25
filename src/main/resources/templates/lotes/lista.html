@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lotes - Sistema de Inventario</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .alert-custom {
+            border-radius: 10px;
+            border: none;
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        /* Estilo para el botón de dashboard */
+        .btn-dashboard {
+            transition: all 0.3s ease;
+        }
+        .btn-dashboard:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Page Header CON BOTÓN DASHBOARD -->
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div class="mb-3 mb-md-0">
+                    <h2 class="mb-0">
+                        <i class="fas fa-box-open me-2"></i>Gestión de Lotes
+                    </h2>
+                    <p class="mb-0 mt-2 opacity-75">Control de trazabilidad y fechas de vencimiento</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- ✅ BOTÓN VOLVER AL DASHBOARD -->
+                    <a href="/" class="btn btn-light btn-lg btn-dashboard">
+                        <i class="fas fa-home me-2"></i>Volver al Dashboard
+                    </a>
+                    <a th:href="@{/lotes/nuevo}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>Nuevo Lote
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes de alerta -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show alert-custom" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show alert-custom" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filter-section">
+            <form th:action="@{/lotes}" method="get">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="productoId" class="form-label">
+                            <i class="fas fa-box me-1"></i>Filtrar por Producto
+                        </label>
+                        <select class="form-select" id="productoId" name="productoId">
+                            <option value="">Todos los productos</option>
+                            <option th:each="producto : ${productos}" 
+                                    th:value="${producto.id}"
+                                    th:text="${producto.codigo + ' - ' + producto.nombre}"
+                                    th:selected="${productoIdFilter != null and productoIdFilter == producto.id}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="estado" class="form-label">
+                            <i class="fas fa-filter me-1"></i>Filtrar por Estado
+                        </label>
+                        <select class="form-select" id="estado" name="estado">
+                            <option value="">Todos los estados</option>
+                            <option value="LIBERADO" th:selected="${estadoFilter == 'LIBERADO'}">Liberado</option>
+                            <option value="EN_REVISION" th:selected="${estadoFilter == 'EN_REVISION'}">En Revisión</option>
+                            <option value="EN_CUARENTENA" th:selected="${estadoFilter == 'EN_CUARENTENA'}">En Cuarentena</option>
+                            <option value="RECHAZADO" th:selected="${estadoFilter == 'RECHAZADO'}">Rechazado</option>
+                            <option value="PENDIENTE" th:selected="${estadoFilter == 'PENDIENTE'}">Pendiente</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                        <a th:href="@{/lotes}" class="btn btn-secondary">
+                            <i class="fas fa-redo me-1"></i>Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-box-open me-2"></i>Lotes Activos
+                        </h5>
+                        <h2 class="mb-0" th:text="${lotesActivos}">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Por Vencer (30 días)
+                        </h5>
+                        <h2 class="mb-0" th:text="${lotesPorVencer}">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-ban me-2"></i>En Cuarentena
+                        </h5>
+                        <h2 class="mb-0" th:text="${lotesEnCuarentena}">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-list me-2"></i>Total Lotes
+                        </h5>
+                        <h2 class="mb-0" th:text="${lotes != null ? lotes.size() : 0}">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Lotes -->
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Lista de Lotes
+                    <span class="badge bg-primary ms-2" th:text="${lotes != null ? lotes.size() : 0}">0</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table id="tablaLotes" class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                                <th><i class="fas fa-barcode me-1"></i>Número Lote</th>
+                                <th><i class="fas fa-box me-1"></i>Producto</th>
+                                <th><i class="fas fa-cubes me-1"></i>Cantidad</th>
+                                <th><i class="fas fa-calendar-alt me-1"></i>Vencimiento</th>
+                                <th><i class="fas fa-check-circle me-1"></i>Estado</th>
+                                <th><i class="fas fa-map-marker-alt me-1"></i>Ubicación</th>
+                                <th class="text-center"><i class="fas fa-cogs me-1"></i>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${lotes == null or lotes.isEmpty()}">
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted mb-0">No hay lotes registrados</p>
+                                </td>
+                            </tr>
+                            <tr th:each="lote : ${lotes}">
+                                <td>
+                                    <span class="badge bg-secondary" th:text="${lote.id}">1</span>
+                                </td>
+                                <td>
+                                    <strong th:text="${lote.numeroLote}">LT-001</strong>
+                                </td>
+                                <td>
+                                    <span th:if="${lote.producto != null}" th:text="${lote.producto.nombre}">Producto</span>
+                                    <span th:if="${lote.producto == null}" class="text-muted">N/A</span>
+                                    <br/>
+                                    <small class="text-muted" th:if="${lote.producto != null}" th:text="${lote.producto.codigo}">Código</small>
+                                </td>
+                                <td>
+                                    <span th:text="${lote.cantidadActual}">100</span>
+                                    <small class="text-muted">/ <span th:text="${lote.cantidadInicial}">100</span></small>
+                                </td>
+                                <td>
+                                    <span th:if="${lote.fechaVencimiento != null}" 
+                                          th:text="${#temporals.format(lote.fechaVencimiento, 'dd/MM/yyyy')}">
+                                        01/01/2025
+                                    </span>
+                                    <span th:if="${lote.fechaVencimiento == null}" class="text-muted">N/A</span>
+                                </td>
+                                <td>
+                                    <!-- CORREGIDO: Convertir enum a String ANTES de usar replace() -->
+                                    <span th:if="${lote.estadoCalidad != null and lote.estadoCalidad.name() == 'LIBERADO'}" 
+                                          class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Liberado
+                                    </span>
+                                    <span th:if="${lote.estadoCalidad != null and lote.estadoCalidad.name() == 'EN_REVISION'}" 
+                                          class="badge bg-info">
+                                        <i class="fas fa-search me-1"></i>En Revisión
+                                    </span>
+                                    <span th:if="${lote.estadoCalidad != null and lote.estadoCalidad.name() == 'EN_CUARENTENA'}" 
+                                          class="badge bg-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>En Cuarentena
+                                    </span>
+                                    <span th:if="${lote.estadoCalidad != null and lote.estadoCalidad.name() == 'RECHAZADO'}" 
+                                          class="badge bg-danger">
+                                        <i class="fas fa-times me-1"></i>Rechazado
+                                    </span>
+                                    <span th:if="${lote.estadoCalidad != null and lote.estadoCalidad.name() == 'PENDIENTE'}" 
+                                          class="badge bg-secondary">
+                                        <i class="fas fa-clock me-1"></i>Pendiente
+                                    </span>
+                                    <span th:if="${lote.estadoCalidad == null}" class="badge bg-secondary">
+                                        <i class="fas fa-clock me-1"></i>Pendiente
+                                    </span>
+                                </td>
+                                <td>
+                                    <span th:if="${lote.ubicacion != null}" th:text="${lote.ubicacion.codigo}">UB-001</span>
+                                    <span th:if="${lote.ubicacion == null}" class="text-muted">N/A</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a th:href="@{/lotes/detalle/{id}(id=${lote.id})}" 
+                                           class="btn btn-sm btn-info"
+                                           title="Ver Detalle">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a th:href="@{/lotes/editar/{id}(id=${lote.id})}" 
+                                           class="btn btn-sm btn-warning"
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a th:href="@{/lotes/eliminar/{id}(id=${lote.id})}" 
+                                           class="btn btn-sm btn-danger"
+                                           onclick="return confirm('¿Está seguro de eliminar este lote?')"
+                                           title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script th:inline="none">
+        $(document).ready(function() {
+            // Inicializar Select2 para filtros
+            $('#productoId').select2({
+                placeholder: 'Seleccione un producto',
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Inicializar DataTables solo si hay datos
+            var tableRows = $('#tablaLotes tbody tr').length;
+            var hasData = tableRows > 1 || (tableRows === 1 && $('#tablaLotes tbody tr td').length > 1);
+            
+            if (hasData) {
+                $('#tablaLotes').DataTable({
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                    },
+                    order: [[4, "asc"]], // Ordenar por fecha de vencimiento
+                    pageLength: 25,
+                    responsive: true
+                });
+            }
+
+            // Auto-cerrar alertas después de 5 segundos
+            setTimeout(function() {
+                $('.alert').fadeOut('slow');
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
+
+Lista.html/transferencias
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transferencias de Ubicación - Droguería Inti</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .navbar-custom {
+            background-color: #2c3e50;
+        }
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.1);
+        }
+        .card-stat {
+            border-left: 4px solid #007bff;
+        }
+        .badge-transferencia {
+            font-size: 0.8em;
+        }
+        /* ✅ Estilo para botón dashboard destacado */
+        .nav-link-dashboard {
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem !important;
+        }
+        .nav-link-dashboard:hover {
+            background-color: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar Simple -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" th:href="@{/}">
+                <i class="fas fa-clinic-medical"></i> Droguería Inti
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <!-- ✅ BOTÓN DASHBOARD DESTACADO -->
+                    <li class="nav-item">
+                        <a class="nav-link nav-link-dashboard" th:href="@{/}">
+                            <i class="fas fa-home me-1"></i> Volver al Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/productos}">
+                            <i class="fas fa-pills"></i> Productos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/lotes}">
+                            <i class="fas fa-boxes"></i> Lotes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" th:href="@{/transferencias-ubicacion}">
+                            <i class="fas fa-exchange-alt"></i> Transferencias
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/control-calidad}">
+                            <i class="fas fa-clipboard-check"></i> Control Calidad
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/perfil}">
+                            <i class="fas fa-user"></i> Mi Perfil
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/logout}">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-exchange-alt text-primary"></i>
+                        Transferencias de Ubicación
+                    </h1>
+                    <a th:href="@{/transferencias-ubicacion/nuevo}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nueva Transferencia
+                    </a>
+                </div>
+
+                <!-- Alertas -->
+                <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <span th:text="${success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Filtros -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-filter"></i> Filtros de Búsqueda
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/transferencias-ubicacion/buscar}" method="get" class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Producto</label>
+                                <select name="productoId" class="form-select">
+                                    <option value="">Todos los productos</option>
+                                    <option th:each="producto : ${productos}" 
+                                            th:value="${producto.id}" 
+                                            th:text="${producto.codigo + ' - ' + producto.nombre}">
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha Desde</label>
+                                <input type="date" name="fechaInicio" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Fecha Hasta</label>
+                                <input type="date" name="fechaFin" class="form-control">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card card-stat">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title text-muted">Total Transferencias</h6>
+                                        <h3 th:text="${#lists.size(transferencias)}" class="mb-0 text-primary">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-exchange-alt fa-2x text-primary"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-stat">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title text-muted">Productos Únicos</h6>
+                                        <h3 th:text="${productosUnicos}" class="mb-0 text-success">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-boxes fa-2x text-success"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-stat">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title text-muted">Este Mes</h6>
+                                        <h3 th:text="${#lists.size(transferencias)}" class="mb-0 text-info">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-calendar-alt fa-2x text-info"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-stat">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="card-title text-muted">Activas</h6>
+                                        <h3 th:text="${#lists.size(transferencias)}" class="mb-0 text-warning">0</h3>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-sync-alt fa-2x text-warning"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Transferencias -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list"></i> Lista de Transferencias
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Producto</th>
+                                        <th>Lote</th>
+                                        <th>Ubicación Origen</th>
+                                        <th>Ubicación Destino</th>
+                                        <th>Cantidad</th>
+                                        <th>Fecha</th>
+                                        <th>Usuario</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="transferencia : ${transferencias}" 
+                                        th:class="${transferencia.ubicacionOrigen == null} ? 'table-info' : ''">
+                                        <td th:text="${transferencia.id}"></td>
+                                        <td>
+                                            <strong th:text="${transferencia.producto.codigo}"></strong>
+                                            <br>
+                                            <small th:text="${transferencia.producto.nombre}" class="text-muted"></small>
+                                        </td>
+                                        <td>
+                                            <span th:if="${transferencia.lote != null}" 
+                                                  th:text="${transferencia.lote.numeroLote}"
+                                                  class="badge bg-secondary badge-transferencia">
+                                            </span>
+                                            <span th:unless="${transferencia.lote != null}" class="text-muted">N/A</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${transferencia.ubicacionOrigen != null}"
+                                                  th:text="${transferencia.ubicacionOrigen.nombre}"
+                                                  class="badge bg-warning text-dark">
+                                            </span>
+                                            <span th:unless="${transferencia.ubicacionOrigen != null}" 
+                                                  class="text-muted">Entrada Externa</span>
+                                        </td>
+                                        <td>
+                                            <span th:text="${transferencia.ubicacionDestino.nombre}"
+                                                  class="badge bg-success">
+                                            </span>
+                                        </td>
+                                        <td th:text="${transferencia.cantidad}" class="fw-bold text-primary"></td>
+                                        <td>
+                                            <small th:text="${#temporals.format(transferencia.fechaTransferencia, 'dd/MM/yyyy HH:mm')}"></small>
+                                        </td>
+                                        <td>
+                                            <small th:text="${transferencia.usuario.nombreCompleto}"></small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-info" 
+                                                        th:onclick="|verDetalle(${transferencia.id})|"
+                                                        title="Ver detalle">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" 
+                                                        th:onclick="|eliminarTransferencia(${transferencia.id})|"
+                                                        title="Eliminar"
+                                                        th:if="${transferencia.fechaTransferencia.isAfter(#temporals.createNow().minusHours(24))}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(transferencias)}">
+                                        <td colspan="9" class="text-center py-5 text-muted">
+                                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                                            <p class="mb-3">No hay transferencias registradas</p>
+                                            <a th:href="@{/transferencias-ubicacion/nuevo}" class="btn btn-primary">
+                                                <i class="fas fa-plus"></i> Crear Primera Transferencia
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Simple -->
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">&copy; 2025 Droguería Inti - Sistema de Gestión de Inventario</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function verDetalle(id) {
+            window.location.href = '/transferencias-ubicacion/detalle/' + id;
+        }
+        
+        function eliminarTransferencia(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta transferencia?')) {
+                window.location.href = '/transferencias-ubicacion/eliminar/' + id;
+            }
+        }
+        
+        // Auto-close alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

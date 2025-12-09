@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${transferencia.id != null} ? 'Editar Transferencia' : 'Nueva Transferencia'">Transferencia - Droguería Inti</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .navbar-custom {
+            background-color: #2c3e50;
+        }
+        .required-label::after {
+            content: " *";
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar Simple -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" th:href="@{/}">
+                <i class="fas fa-clinic-medical"></i> Droguería Inti
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" th:href="@{/transferencias-ubicacion}">
+                    <i class="fas fa-arrow-left"></i> Volver a Transferencias
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-exchange-alt text-primary"></i>
+                        <span th:text="${transferencia.id != null} ? 'Editar Transferencia' : 'Nueva Transferencia'">
+                            Nueva Transferencia
+                        </span>
+                    </h1>
+                    <a th:href="@{/transferencias-ubicacion}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+
+                <!-- Alertas -->
+                <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i>
+                    <span th:text="${success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <!-- Formulario -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-edit"></i> 
+                            <span th:text="${transferencia.id != null} ? 'Editar Transferencia' : 'Completar Datos de Transferencia'">
+                                Completar Datos de Transferencia
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/transferencias-ubicacion/guardar}" 
+                              th:object="${transferencia}" 
+                              method="post"
+                              id="transferenciaForm">
+                            
+                            <!-- Producto -->
+                            <div class="mb-3">
+                                <label for="producto" class="form-label required-label">Producto</label>
+                                <select th:field="*{producto.id}" 
+                                        id="producto" 
+                                        class="form-select" 
+                                        required
+                                        onchange="cargarLotes()">
+                                    <option value="">Seleccionar producto...</option>
+                                    <option th:each="producto : ${productos}" 
+                                            th:value="${producto.id}" 
+                                            th:text="${producto.codigo + ' - ' + producto.nombre}"
+                                            th:selected="${transferencia.producto != null && transferencia.producto.id == producto.id}">
+                                    </option>
+                                </select>
+                                <div class="form-text">Selecciona el producto a transferir</div>
+                            </div>
+
+                            <!-- Lote -->
+                            <div class="mb-3">
+                                <label for="lote" class="form-label">Lote (Opcional)</label>
+                                <select th:field="*{lote.id}" 
+                                        id="lote" 
+                                        class="form-select">
+                                    <option value="">Sin lote específico</option>
+                                    <!-- Los lotes se cargan dinámicamente via JavaScript -->
+                                </select>
+                                <div class="form-text">Si dejas vacío, se transferirá el stock general del producto</div>
+                            </div>
+
+                            <div class="row">
+                                <!-- Ubicación Origen -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="ubicacionOrigen" class="form-label">Ubicación Origen (Opcional)</label>
+                                    <select th:field="*{ubicacionOrigen.id}" 
+                                            id="ubicacionOrigen" 
+                                            class="form-select">
+                                        <option value="">Entrada externa / Nueva ubicación</option>
+                                        <option th:each="ubicacion : ${ubicaciones}" 
+                                                th:value="${ubicacion.id}" 
+                                                th:text="${ubicacion.codigo + ' - ' + ubicacion.nombre + ' (Cap: ' + (ubicacion.capacidadActual != null ? ubicacion.capacidadActual : '0') + '/' + (ubicacion.capacidadMaxima != null ? ubicacion.capacidadMaxima : '∞') + ')'}"
+                                                th:selected="${transferencia.ubicacionOrigen != null && transferencia.ubicacionOrigen.id == ubicacion.id}">
+                                        </option>
+                                    </select>
+                                    <div class="form-text">Dejar vacío para entrada desde proveedor</div>
+                                </div>
+
+                                <!-- Ubicación Destino -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="ubicacionDestino" class="form-label required-label">Ubicación Destino</label>
+                                    <select th:field="*{ubicacionDestino.id}" 
+                                            id="ubicacionDestino" 
+                                            class="form-select" 
+                                            required>
+                                        <option value="">Seleccionar destino...</option>
+                                        <option th:each="ubicacion : ${ubicaciones}" 
+                                                th:value="${ubicacion.id}" 
+                                                th:text="${ubicacion.codigo + ' - ' + ubicacion.nombre + ' (Cap: ' + (ubicacion.capacidadActual != null ? ubicacion.capacidadActual : '0') + '/' + (ubicacion.capacidadMaxima != null ? ubicacion.capacidadMaxima : '∞') + ')'}"
+                                                th:selected="${transferencia.ubicacionDestino != null && transferencia.ubicacionDestino.id == ubicacion.id}">
+                                        </option>
+                                    </select>
+                                    <div class="form-text">Ubicación donde se almacenará el producto</div>
+                                </div>
+                            </div>
+
+                            <!-- Cantidad -->
+                            <div class="mb-3">
+                                <label for="cantidad" class="form-label required-label">Cantidad</label>
+                                <input th:field="*{cantidad}" 
+                                       type="number" 
+                                       id="cantidad" 
+                                       class="form-control" 
+                                       min="1" 
+                                       required
+                                       placeholder="Ingresa la cantidad a transferir">
+                                <div class="form-text">Cantidad de unidades a transferir</div>
+                            </div>
+
+                            <!-- Motivo -->
+                            <div class="mb-3">
+                                <label for="motivo" class="form-label">Motivo (Opcional)</label>
+                                <textarea th:field="*{motivo}" 
+                                          id="motivo" 
+                                          class="form-control" 
+                                          rows="3"
+                                          placeholder="Descripción del motivo de la transferencia..."></textarea>
+                            </div>
+
+                            <!-- Documento Referencia -->
+                            <div class="mb-3">
+                                <label for="documentoReferencia" class="form-label">Documento de Referencia (Opcional)</label>
+                                <input th:field="*{documentoReferencia}" 
+                                       type="text" 
+                                       id="documentoReferencia" 
+                                       class="form-control"
+                                       placeholder="Número de documento, guía, etc.">
+                            </div>
+
+                            <!-- Botones -->
+                            <div class="d-flex justify-content-between pt-3 border-top">
+                                <a th:href="@{/transferencias-ubicacion}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> 
+                                    <span th:text="${transferencia.id != null} ? 'Actualizar Transferencia' : 'Registrar Transferencia'">
+                                        Registrar Transferencia
+                                    </span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Simple -->
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">&copy; 2025 Droguería Inti - Sistema de Gestión de Inventario</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    function cargarLotes() {
+        const productoId = document.getElementById('producto').value;
+        const loteSelect = document.getElementById('lote');
+        
+        // Limpiar select de lotes
+        loteSelect.innerHTML = '<option value="">Sin lote específico</option>';
+        
+        if (productoId) {
+            // Mostrar carga
+            const loadingOption = document.createElement('option');
+            loadingOption.value = "";
+            loadingOption.textContent = "Cargando lotes disponibles...";
+            loteSelect.appendChild(loadingOption);
+            
+            // Hacer llamada AJAX para cargar lotes del producto
+            fetch('/transferencias-ubicacion/api/lotes/producto/' + productoId)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error al cargar lotes');
+                    }
+                    return response.json();
+                })
+                .then(lotes => {
+                    loteSelect.innerHTML = '<option value="">Sin lote específico</option>';
+                    
+                    if (lotes.length === 0) {
+                        const noLotesOption = document.createElement('option');
+                        noLotesOption.value = "";
+                        noLotesOption.textContent = "No hay lotes disponibles para este producto";
+                        loteSelect.appendChild(noLotesOption);
+                    } else {
+                        lotes.forEach(lote => {
+                            const option = document.createElement('option');
+                            option.value = lote.id;
+                            option.textContent = lote.numeroLote + ' - Stock: ' + lote.cantidadActual + 
+                                              (lote.fechaVencimiento ? ' - Vence: ' + lote.fechaVencimiento : '');
+                            loteSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error cargando lotes:', error);
+                    loteSelect.innerHTML = '<option value="">Sin lote específico</option>';
+                    const errorOption = document.createElement('option');
+                    errorOption.value = "";
+                    errorOption.textContent = "Error al cargar lotes";
+                    loteSelect.appendChild(errorOption);
+                });
+        }
+    }
+
+    // Validación del formulario
+    document.getElementById('transferenciaForm').addEventListener('submit', function(e) {
+        const ubicacionOrigen = document.getElementById('ubicacionOrigen').value;
+        const ubicacionDestino = document.getElementById('ubicacionDestino').value;
+        
+        if (ubicacionOrigen && ubicacionOrigen === ubicacionDestino) {
+            e.preventDefault();
+            alert('❌ Error: La ubicación de origen y destino no pueden ser iguales');
+            return false;
+        }
+        
+        const cantidad = document.getElementById('cantidad').value;
+        if (!cantidad || cantidad <= 0) {
+            e.preventDefault();
+            alert('❌ Error: La cantidad debe ser mayor a 0');
+            return false;
+        }
+
+        const producto = document.getElementById('producto').value;
+        if (!producto) {
+            e.preventDefault();
+            alert('❌ Error: Debe seleccionar un producto');
+            return false;
+        }
+
+        const ubicacionDestinoSelect = document.getElementById('ubicacionDestino').value;
+        if (!ubicacionDestinoSelect) {
+            e.preventDefault();
+            alert('❌ Error: Debe seleccionar una ubicación destino');
+            return false;
+        }
+    });
+
+    // Auto-close alerts after 5 seconds
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+
+    // Cargar lotes al cargar la página si ya hay un producto seleccionado
+    document.addEventListener('DOMContentLoaded', function() {
+        const productoId = document.getElementById('producto').value;
+        if (productoId) {
+            cargarLotes();
+        }
+    });
+</script>
+</body>
+</html>

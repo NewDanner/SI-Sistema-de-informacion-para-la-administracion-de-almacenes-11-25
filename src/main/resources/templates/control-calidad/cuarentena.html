@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zona de Cuarentena - Sistema de Inventario</title>
+    <th:block th:replace="~{fragments/header::head(title='Zona de Cuarentena')}"></th:block>
+    <style>
+        .cuarentena-container {
+            background-color: #fff5f5;
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .cuarentena-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .cuarentena-icon {
+            font-size: 2.5rem;
+            color: #e74c3c;
+            margin-right: 15px;
+        }
+        .cuarentena-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #e74c3c;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        .lote-card {
+            border: 1px solid #e74c3c;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        .lote-card:hover {
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+            transform: translateY(-2px);
+        }
+        .lote-header {
+            background-color: #ffeded;
+            padding: 10px 15px;
+            border-bottom: 1px solid #f5c6cb;
+        }
+        .lote-body {
+            padding: 15px;
+        }
+        .lote-footer {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-top: 1px solid #e9ecef;
+        }
+        .btn-action {
+            margin: 0 5px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid #3498db;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+        }
+        .info-value {
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <th:block th:replace="~{fragments/header::header(pageTitle='Zona de Cuarentena', pageIcon='fas fa-exclamation-triangle')}"></th:block>
+    
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="cuarentena-container">
+                <div class="cuarentena-header">
+                    <div class="cuarentena-icon">
+                        <i class="fas fa-biohazard"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0">Zona de Cuarentena</h2>
+                        <p class="text-muted mb-0">Productos en revisión de calidad</p>
+                    </div>
+                </div>
+                
+                <!-- Estadísticas -->
+                <div class="cuarentena-stats">
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${totalEnCuarentena}">0</div>
+                        <div class="stat-label">Lotes en Cuarentena</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${totalPendientes}">0</div>
+                        <div class="stat-label">Lotes Pendientes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" th:text="${#lists.size(lotesEnCuarentena) * 100.0 / totalLotes} + '%'" th:if="${totalLotes > 0}">0%</div>
+                        <div class="stat-label">Porcentaje en Cuarentena</div>
+                    </div>
+                </div>
+                
+                <!-- Alertas -->
+                <div th:if="${success}" class="alert alert-success alert-dismissible fade show auto-dismiss" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <span th:text="${success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show auto-dismiss" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                
+                <!-- Filtros y búsqueda -->
+                <div class="card mb-4">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-filter"></i> Filtros de Búsqueda
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/control-calidad/cuarentena}" method="get">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Producto</label>
+                                    <input type="text" name="producto" class="form-control" placeholder="Buscar por nombre o código">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Fecha de Entrada</label>
+                                    <input type="date" name="fechaInicio" class="form-control">
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="fas fa-search"></i> Buscar
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Lotes en Cuarentena -->
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list"></i> Lotes en Cuarentena
+                            <span class="badge bg-light text-dark ms-2" th:text="${#lists.size(lotesEnCuarentena)}">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${#lists.isEmpty(lotesEnCuarentena)}" class="text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h4 class="text-muted">No hay lotes en cuarentena</h4>
+                            <p class="text-muted">Todos los productos han sido liberados o rechazados</p>
+                        </div>
+                        
+                        <div th:each="control : ${lotesEnCuarentena}" class="lote-card">
+                            <div class="lote-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-box me-2"></i>
+                                        <span th:text="${control.lote.producto.nombre}"></span>
+                                    </h5>
+                                    <span class="badge bg-danger">EN CUARENTENA</span>
+                                </div>
+                            </div>
+                            <div class="lote-body">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <div class="info-label">Lote</div>
+                                        <div class="info-value" th:text="${control.lote.numeroLote}"></div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Cantidad</div>
+                                        <div class="info-value" th:text="${control.lote.cantidadActual} + ' ' + ${control.lote.producto.unidadMedida}"></div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Vencimiento</div>
+                                        <div class="info-value" th:text="${#temporals.format(control.lote.fechaVencimiento, 'dd/MM/yyyy')}"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="info-label mb-1">Observaciones</div>
+                                    <p class="mb-0" th:text="${control.observaciones} ?: 'Sin observaciones'"></p>
+                                </div>
+                            </div>
+                            <div class="lote-footer">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        <span th:text="${#temporals.format(control.fechaActualizacion, 'dd/MM/yyyy HH:mm')}"></span>
+                                    </small>
+                                    <div>
+                                        <button class="btn btn-sm btn-success btn-action" data-bs-toggle="modal" 
+                                                th:attr="data-bs-target='#liberarModal' + ${control.id}">
+                                            <i class="fas fa-check"></i> Liberar
+                                        </button>
+                                        <button class="btn btn-sm btn-danger btn-action" data-bs-toggle="modal" 
+                                                th:attr="data-bs-target='#rechazarModal' + ${control.id}">
+                                            <i class="fas fa-times"></i> Rechazar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modales para cada control en cuarentena -->
+    <div th:each="control : ${lotesEnCuarentena}">
+        <!-- Modal Liberar -->
+        <div class="modal fade" th:id="'liberarModal' + ${control.id}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Liberar Lote</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/control-calidad/liberar/{id}(id=${control.id})}" method="post">
+                        <input type="hidden" name="id" th:value="${control.id}" />
+                        <div class="modal-body">
+                            <p><strong>Lote:</strong> <span th:text="${control.lote.numeroLote}"></span></p>
+                            <p><strong>Producto:</strong> <span th:text="${control.lote.producto.nombre}"></span></p>
+                            <div class="mb-3">
+                                <label class="form-label">Observaciones de Liberación:</label>
+                                <textarea name="observaciones" class="form-control" rows="3" placeholder="Ingrese observaciones..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label required">Ubicación de Destino:</label>
+                                <select name="ubicacionDestinoId" class="form-select" required>
+                                    <option value="">-- Seleccione ubicación --</option>
+                                    <option th:each="ubicacion : ${ubicacionesDisponibles}" 
+                                            th:value="${ubicacion.id}" 
+                                            th:text="${ubicacion.codigo} + ' - ' + ${ubicacion.nombre}">
+                                    </option>
+                                </select>
+                                <div class="form-text">Seleccione la ubicación donde se moverá el lote</div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Confirmar Liberación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Rechazar -->
+        <div class="modal fade" th:id="'rechazarModal' + ${control.id}">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Rechazar Lote</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form th:action="@{/control-calidad/rechazar/{id}(id=${control.id})}" method="post">
+                        <input type="hidden" name="id" th:value="${control.id}" />
+                        <div class="modal-body">
+                            <p><strong>Lote:</strong> <span th:text="${control.lote.numeroLote}"></span></p>
+                            <p><strong>Producto:</strong> <span th:text="${control.lote.producto.nombre}"></span></p>
+                            <div class="mb-3">
+                                <label class="form-label required">Motivo de Rechazo:</label>
+                                <textarea name="motivoRechazo" class="form-control" rows="3" placeholder="Describa el motivo del rechazo..." required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label required">Acción a realizar:</label>
+                                <select name="accion" class="form-select" required>
+                                    <option value="devolver">Devolver al proveedor</option>
+                                    <option value="merma">Registrar como merma</option>
+                                    <option value="descartar">Descartar producto</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Confirmar Rechazo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <th:block th:replace="~{fragments/footer::footer}"></th:block>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-ocultar alertas después de 5 segundos
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+            
+            // Inicializar tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+</body>
+</html>

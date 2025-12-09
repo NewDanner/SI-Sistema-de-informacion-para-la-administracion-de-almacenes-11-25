@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas - Sistema de Inventario</title>
+    <th:block th:replace="~{fragments/header :: head(title='Alertas')}"></th:block>
+</head>
+<body>
+    <th:block th:replace="~{fragments/header :: header(pageTitle='Alertas del Sistema', pageIcon='fas fa-bell')}"></th:block>
+
+    <div th:each="alerta : ${alertas}" class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">
+                <span th:if="${alerta.nivelPrioridad == 'critica'}" class="badge bg-danger">CRÍTICA</span>
+                <span th:if="${alerta.nivelPrioridad == 'alta'}" class="badge bg-warning">ALTA</span>
+                <span th:text="${alerta.tipoAlerta.nombre}"></span>
+            </h5>
+            <p class="card-text" th:text="${alerta.mensaje}"></p>
+            <small class="text-muted">
+                <i class="fas fa-clock"></i>
+                <span th:text="${#temporals.format(alerta.fechaAlerta, 'dd/MM/yyyy HH:mm')}"></span>
+            </small>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(alertas)}" class="text-center py-5">
+        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">No hay alertas</h4>
+    </div>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+</body>
+</html>
